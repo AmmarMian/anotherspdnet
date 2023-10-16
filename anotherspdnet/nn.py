@@ -7,7 +7,6 @@
 # =========================================
 
 import os
-from typing import Tuple
 
 import torch
 from torch import nn
@@ -64,7 +63,6 @@ class BiMap(nn.Module):
 
         W = W.to(device)
         self.W = StiefelParameter(W, requires_grad=True)
-        print(self.W.shape)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """ Forward pass of the BiMap layer

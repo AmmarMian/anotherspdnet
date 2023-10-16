@@ -8,7 +8,11 @@ setup(
     packages=find_packages(include=['anotherspdnet', 'anotherspdnet.*']),
     install_requires=[
         'torch>=2.0.1',
-        'geomstats>=2.0.0',
-        
+        'geomstats>=2.0.0', 
+    ],
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+        'pytest-sugar'
     ]
 )

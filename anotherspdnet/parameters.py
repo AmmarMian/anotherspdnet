@@ -17,7 +17,17 @@ class StiefelParameter(nn.Parameter):
         if data is not None and verify_stiefel:
             assert data.shape[-2] >= data.shape[-1], \
                     "Stiefel matrices must have more rows than columns"
-            assert torch.allclose(data.T @ data, torch.eye(data.shape[-1])), \
+            if data.ndim == 2:
+                assert torch.allclose(
+                        data.T @ data, torch.eye(data.shape[-1])), \
+                    "Stiefel matrices must be orthogonal"
+            else:
+                multidim_eye = torch.eye(data.shape[-1]).reshape(
+                            (1,)*(data.ndim-2) + (data.shape[-1], data.shape[-1])
+                        ).repeat(data.shape[:-2] + (1, 1))
+                assert torch.allclose(
+                        torch.bmm(data.transpose(-2, -1), data),
+                        multidim_eye), \
                     "Stiefel matrices must be orthogonal"
         return super().__new__(cls, data, requires_grad=requires_grad)
 
