@@ -18,12 +18,21 @@ from torch.autograd import Function
 # BiMap
 # =============================================================================
 def biMap(X: torch.Tensor, W: torch.Tensor) -> torch.Tensor:
-    """ BiMap transform in a SPDnet layer according to the paper
-    A Riemannian Network for SPD Matrix Learning, Huang et al
-    AAAI Conference on Artificial Intelligence, 2017
+    """ BiMap transform in a SPDnet layer according to the paper:
+
+        \"A Riemannian Network for SPD Matrix Learning\", Huang et al
+        AAAI Conference on Artificial Intelligence, 2017
 
     The mapping is as follows:
-        $\\mathbf{Y} = \\mathbf{W}^T \\mathbf{X} \\mathbf{W}$,
+
+    .. math::
+
+        \\mathbf{Y} = \\mathbf{W}^T \\mathbf{X} \\mathbf{W},
+
+    where :math:`\\mathbf{X}\\in\\mathcal{S}_{n_{\\mathrm{in}}}^{++}` is the
+    input SPD matrix and :math:`\\mathbf{W}\\in\\mathcal{S}t(n_{\\mathrm{in}},
+    n_{\\mathrm{out}})` is an orthogonal weight matrix. For convenience, the
+    input **W** of this function is the transpose of the weight matrix.
 
     Parameters
     ----------

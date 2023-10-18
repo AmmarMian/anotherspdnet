@@ -10,10 +10,33 @@ import torch
 from torch import nn
 
 class StiefelParameter(nn.Parameter):
-    r"""Parameter belonging in the manifold of Stiefel matrices.
-    i.e $\mathrm{St}_{n,k} = \{\mathbf{M}\in\mathcal{M}_{n,k}: \mathbf{M}^T\mathbf{M}=\mathbf{I}_k\}$.
+    """Parameter belonging in the manifold of Stiefel matrices.
+    i.e :math:`\\mathcal{S}t_{n,k} = \\{\\mathbf{M}\\in\\mathcal{M}_{n,k}: 
+    \\mathbf{M}^{\\mathrm{T}}\\mathbf{M}=\\mathbf{I}_k\\}`.
     """
-    def __new__(cls, data, requires_grad=True, verify_stiefel=False):
+
+    def __new__(cls, data, requires_grad=True,
+                verify_stiefel=False) -> nn.Parameter:
+        """Create a new StiefelParameter with some data that can
+        also be verified to be a Stiefel matrix.
+
+        Parameters
+        ----------
+        data : torch.Tensor
+            Data of the parameter.
+
+        requires_grad : bool, optional
+            Whether the parameter requires gradient. Default is True.
+
+        verify_stiefel : bool, optional
+            Whether to verify that the data is a Stiefel matrix.
+            Default is False.
+
+        Returns
+        -------
+        torch.nn.Parameter
+            The created StiefelParameter.
+        """
         if data is not None and verify_stiefel:
             assert data.shape[-2] >= data.shape[-1], \
                     "Stiefel matrices must have more rows than columns"
@@ -31,7 +54,14 @@ class StiefelParameter(nn.Parameter):
                     "Stiefel matrices must be orthogonal"
         return super().__new__(cls, data, requires_grad=requires_grad)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Representation of the StiefelParameter.
+
+        Returns
+        -------
+        str
+            Representation of the StiefelParameter.
+        """
         string = f'StiefelParameter'
         if self.requires_grad:
             string += '(requires_grad, '
