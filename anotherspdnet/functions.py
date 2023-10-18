@@ -8,10 +8,12 @@
 #        implementation
 # =========================================
 
-from typing import Tuple
+from typing import Tuple, Callable
 
 import torch
 from torch.autograd import Function
+
+from .utils import symmetrize, construct_eigdiff_matrix, zero_offdiag
 
 
 # =============================================================================
@@ -42,7 +44,7 @@ def biMap(X: torch.Tensor, W: torch.Tensor) -> torch.Tensor:
     W : torch.Tensor of shape (..., n_out, n_in)
         Batch of Stiefel weight matrices
         (or their transpose in case n_out > n_in).
-        W.ndim must be 2 if X.ndim is 2. Then for higher number of dimesions,
+        W.ndim must be 2 if X.ndim is 2. Then for higher number of dimensions,
         W.ndim must be X.ndim-1. (We will repeat the -3 dimension to match the
         number of matrices in X)
 
@@ -165,3 +167,167 @@ class BiMapFunction(Function):
         """
         X, W = ctx.saved_tensors
         return biMap_gradient(X, W, grad_output)
+
+
+# =============================================================================
+# Operations  on the eigenvalues of a SPD matrix
+# =============================================================================
+def eig_operation(M: torch.Tensor, operation: Callable,
+                  eig_function: str = "eigh", **kwargs) -> Tuple[
+                          torch.Tensor, torch.Tensor,
+                          torch.Tensor]:
+    """Generic functions to compute an operation on the eigenvalues of a
+    SPD matrix.
+
+    Parameters
+    ----------
+    M : torch.Tensor
+        SPD matrix of shape (..., n_features, n_features)
+
+    operation: Callable
+        function to apply to the eigenvalues. Any unknown keyword args passed
+        to this function are passed to the operation function.
+
+    eig_function: str
+        name of the function to compute the eigenvalues and eigenvectors.
+        Choices are: "eigh", "eig" or "svd"
+        Default is "eigh" for torch.eigh.
+
+    **kwargs:
+        keyword arguments to pass to the operation function.
+
+    Returns
+    -------
+    eigvals : torch.Tensor
+        eigenvalues of shape (..., n_features)
+        of the SPD matrices in M.
+
+    eigvecs : torch.Tensor
+        eigenvectors of shape (..., n_features, n_features)
+        of the SPD matrices in M.
+
+    result : torch.Tensor
+        result of the operation on the eigenvalues of shape
+        (..., n_matrices, n_features) and reconstructed from the
+        eigenvectors.
+    """
+    # Parsing the eig_function argument
+    assert eig_function in ["eigh", "eig", "svd"], \
+            f"eig_function must be in ['eigh', 'eig', 'svd'], got {eig_function}"
+    if eig_function == "eigh":
+        _eig_function = torch.linalg.eigh
+    elif eig_function == "eig":
+        _eig_function = torch.linalg.eig
+    else:
+        _eig_function = torch.linalg.svd
+
+
+    eigvals, eigvecs = _eig_function(M)
+    _eigvals = torch.diag_embed(operation(eigvals, **kwargs))
+    result = torch.einsum('...cd,...de,...ef->...cf',
+                        eigvecs, _eigvals, eigvecs.transpose(-1, -2))
+
+    return eigvals, eigvecs, result
+
+
+def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
+                           eigvecs: torch.Tensor, operation: Callable,
+                           grad_operation: Callable, **kwargs) -> torch.Tensor:
+    """Generic function to compute the gradient of an operation on the
+    eigenvalues of a SPD matrix.
+
+    Parameters
+    ----------
+    grad_output : torch.Tensor
+        gradient of the loss function wrt the output of the operation.
+        of shape (..., n_features, n_features)
+
+    eigvals : torch.Tensor
+        eigenvalues of shape (..., n_features)
+
+    eigvecs : torch.Tensor
+        eigenvectors of shape (..., n_features, n_features)
+
+    operation: Callable
+        function to apply to the eigenvalues. Any unknown keyword args passed
+        to this function are passed to the operation function.
+
+    grad_operation: Callable
+        function to apply to the gradient of the operation. Any unknown
+        keyword args passed to this function are passed to the operation
+        function.
+
+    **kwargs:
+        keyword arguments to pass to the operation and gradient functions.
+    """
+    grad_output_sym = symmetrize(grad_output)
+    eigvals_ = torch.diag_embed(operation(eigvals, **kwargs))
+    deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
+    eigdiff_matrix = construct_eigdiff_matrix(eigvals)
+    eigvecs_transpose = eigvecs.transpose(-1, -2)
+    grad_eigvectors = 2*torch.einsum(
+            '...ab,...bc,...cd->...ad', grad_output_sym, eigvecs,
+            eigvals_)
+    grad_eigvals = torch.einsum(
+            '...ab,...bc,...cd,...df->...af', deriveigvals,
+            eigvecs_transpose, grad_output, eigvecs)
+
+    # Computing final gradient towards X
+    # -eigdiff_matrix cause transposing pairwise distances change the sign only
+    return 2*torch.einsum('...ab,...bc,...cd->...ad',
+                eigvecs,
+                -eigdiff_matrix * symmetrize(
+                    torch.einsum('...ab,...bc->...ac', eigvecs_transpose,
+                                 grad_eigvectors)),
+                eigvecs.transpose(-1, -2)) +\
+            torch.einsum('...ab,...bc,...cd->...ad', eigvecs,
+                zero_offdiag(grad_eigvals), eigvecs_transpose)
+
+
+class ReEig(Function):
+    """ReEig function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor, eps: float) -> torch.Tensor:
+        """Forward pass of the ReEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to save tensors for the backward pass.
+
+        M : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices.
+
+        eps : float
+            Value for the rectification of the eigenvalues.
+
+        Returns
+        -------
+        M_rect : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices with rectified eigenvalues.
+        """
+        operation = lambda x: torch.nn.functional.threshold(x, eps, eps)
+        eigvals, eigvecs, M_rect = eig_operation(M, operation)
+        ctx.save_for_backward(eigvals, eigvecs, eps)
+        return M_rect
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+        """Backward pass of the ReEig function.
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to retrieve tensors saved during the forward pass.
+        grad_output : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the output of the layer.
+        Returns
+        -------
+        grad_input : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the input of the layer.
+        """
+        operation = lambda x: torch.nn.functional.threshold(x, eps, eps)
+        grad_operation = lambda x: (x > eps).double()
+        eigvals, eigvecs, eps = ctx.saved_tensors
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                operation, grad_operation)
