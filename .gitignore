@@ -5,6 +5,9 @@
 # Sphinx
 docs/_build
 
+# pytest
+junit/
+
 # ---------------------------
 # Python generic gitignore
 # ---------------------------
