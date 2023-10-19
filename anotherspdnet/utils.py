@@ -5,10 +5,12 @@ import torch
 
 def symmetrize(X: torch.Tensor) -> torch.Tensor:
     """Symmetrize a tensor along the last two dimensions.
+
     Parameters
     ----------
     X : torch.Tensor
         tensor of shape (..., n_features, n_features)
+
     Returns
     -------
     sym_X : torch.Tensor
@@ -38,10 +40,12 @@ def construct_eigdiff_matrix(eigvals: torch.Tensor) -> torch.Tensor:
 
 def zero_offdiag(X: torch.Tensor) -> torch.Tensor:
     """Sets the off-diagonal elements of a tensor to 0.
+
     Parameters
     ----------
     X : torch.Tensor
         tensor of shape (..., n_features, n_features)
+
     Returns
     -------
     X_zero : torch.Tensor

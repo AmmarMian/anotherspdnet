@@ -284,6 +284,50 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
                 zero_offdiag(grad_eigvals), eigvecs_transpose)
 
 
+# ReEig
+# -----------------------------
+def re_operation(eigvals: torch.Tensor, eps: float) -> torch.Tensor:
+    """Rectification of the eigenvalues of a SPD matrix.
+
+    Parameters
+    ----------
+    eigvals : torch.Tensor of shape (..., n_features)
+        eigenvalues of the SPD matrices
+
+    eps : float
+        Value for the rectification of the eigenvalues.
+
+    Returns
+    -------
+    eigvals_rect : torch.Tensor of shape (..., n_features)
+        eigenvalues of the SPD matrices with rectified eigenvalues.
+    """
+    return torch.nn.functional.threshold(eigvals, eps, eps)
+
+
+def re_operation_gradient(eigvals: torch.Tensor, eps: float,
+                          dtype: torch.dtype) -> torch.Tensor:
+    """Gradient of the rectification of the eigenvalues of a SPD matrix.
+
+    Parameters
+    ----------
+    eigvals : torch.Tensor of shape (..., n_features)
+        eigenvalues of the SPD matrices
+
+    eps : float
+        Value for the rectification of the eigenvalues.
+
+    dtype : Callable
+        Casting type of the gradient. Default is double.
+
+    Returns
+    -------
+    eigvals_rect : torch.Tensor of shape (..., n_features)
+        eigenvalues of the SPD matrices with rectified eigenvalues.
+    """
+    return (eigvals > eps).type(dtype)
+
+
 class ReEig(Function):
     """ReEig function."""
 
@@ -307,7 +351,7 @@ class ReEig(Function):
         M_rect : torch.Tensor of shape (..., n_features, n_features)
             Batch of SPD matrices with rectified eigenvalues.
         """
-        operation = lambda x: torch.nn.functional.threshold(x, eps, eps)
+        operation = lambda x: re_operation(x, eps)
         eigvals, eigvecs, M_rect = eig_operation(M, operation)
         ctx.save_for_backward(eigvals, eigvecs, eps)
         return M_rect
@@ -315,19 +359,74 @@ class ReEig(Function):
     @staticmethod
     def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
         """Backward pass of the ReEig function.
+
         Parameters
         ----------
         ctx : torch.autograd.function._ContextMethodMixin
             Context object to retrieve tensors saved during the forward pass.
         grad_output : torch.Tensor of shape (..., n_features, n_features)
+
             Gradient of the loss with respect to the output of the layer.
+
         Returns
         -------
         grad_input : torch.Tensor of shape (..., n_features, n_features)
             Gradient of the loss with respect to the input of the layer.
         """
-        operation = lambda x: torch.nn.functional.threshold(x, eps, eps)
-        grad_operation = lambda x: (x > eps).double()
+        operation = lambda x: re_operation(x, eps)
+        operation_gradient = lambda x: re_operation_gradient(x, eps,
+                                                             grad_output.dtype)
         eigvals, eigvecs, eps = ctx.saved_tensors
         return eig_operation_gradient(grad_output, eigvals, eigvecs,
-                                operation, grad_operation)
+                                operation, operation_gradient)
+
+
+# LogEig
+# -----------------------------
+class LogEig(Function):
+    """LogEig function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the logEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to save tensors for the backward pass.
+
+        M : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices.
+
+        Returns
+        -------
+        M_rect : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices with rectified eigenvalues.
+        """
+        eigvals, eigvecs, M_rect = eig_operation(M, torch.log)
+        ctx.save_for_backward(eigvals, eigvecs)
+        return M_rect
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+        """Backward pass of the logEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to retrieve tensors saved during the forward pass.
+
+        grad_output : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the output of the layer.
+
+        Returns
+        -------
+        grad_input : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the input of the layer.
+        """
+        operation_gradient = lambda x: 1/x
+        eigvals, eigvecs = ctx.saved_tensors
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                torch.log, operation_gradient)
+
+
