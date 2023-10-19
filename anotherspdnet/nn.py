@@ -16,7 +16,7 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 from geomstats.geometry.stiefel import Stiefel
 
 from .parameters import StiefelParameter
-from .functions import BiMapFunction
+from .functions import BiMapFunction, ReEigFunction, LogEigFunction
 
 # =============================================================================
 # BiMap layer
@@ -71,20 +71,16 @@ class BiMap(nn.Module):
 
         Parameters
         ----------
-        X : torch.Tensor of shape (n_batches, n_matrices, n_in, n_in)
+        X : torch.Tensor of shape self.n_batches + (n_matrices, n_in, n_in)
             Batches of input SPD matrices.
 
         Returns
         -------
-        Y : torch.Tensor of shape (n_batches, n_matrices, n_out, n_out)
-            The output matrices. SPD if n_out <= n_in. Otherwise, they
-            need regularization.
+        Y : torch.Tensor of shape self.n_batches + (n_matrices, n_out, n_out)
+            The output matrices is close to SPD. They need regularization with
+            the ReEig layer especially if n_out > n_in.
         """
         return BiMapFunction.apply(X, self.W)
-
-    def extra_repr(self) -> str:
-        """ Extra representation of the layer """
-        return f'n_in={self.n_in}, n_out={self.n_out}'
 
     def __repr__(self) -> str:
         """ Representation of the layer """
@@ -93,3 +89,70 @@ class BiMap(nn.Module):
     def __str__(self) -> str:
         """ String representation of the layer """
         return self.__repr__()
+
+
+# =============================================================================
+# ReEig layer
+# =============================================================================
+class ReEig(nn.Module):
+    """ ReEig layer in a SPDnet layer according to the paper:
+        A Riemannian Network for SPD Matrix Learning, Huang et al
+        AAAI Conference on Artificial Intelligence, 2017
+    """
+
+    def __init__(self, eps: float = 1e-4) -> None:
+        """ Constructor of the ReEig layer
+
+        Parameters
+        ----------
+        eps : float, optional
+            Value of rectification of the eigenvalues. Default is 1e-4.
+        """
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the ReEig layer
+
+        Parameters
+        ----------
+        X : torch.Tensor of shape (..., n_features, n_features)
+            Batches of input almost-SPD matrices.
+
+        Returns
+        -------
+        Y : torch.Tensor of shape (..., n_features, n_features)
+            The regularized SPD matrices.
+        """
+        return ReEigFunction.apply(X, self.eps)
+
+
+# =============================================================================
+# LogEig layer
+# =============================================================================
+class LogEig(nn.Module):
+    """ LogEig layer in a SPDnet layer according to the paper:
+        A Riemannian Network for SPD Matrix Learning, Huang et al
+        AAAI Conference on Artificial Intelligence, 2017
+    """
+
+    def __init__(self) -> None:
+        """ Constructor of the LogEig layer"""
+        super().__init__()
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the ReEig layer
+
+        Parameters
+        ----------
+        X : torch.Tensor of shape (..., n_features, n_features)
+            Batches of input almost-SPD matrices.
+
+        Returns
+        -------
+        Y : torch.Tensor of shape (..., n_features, n_features)
+            The regularized SPD matrices.
+        """
+        return LogEigFunction.apply(X)
+        
+

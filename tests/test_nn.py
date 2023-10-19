@@ -169,9 +169,103 @@ class TestBiMap(TestCase):
                 self.n_in_increase))
         X.requires_grad = True
         Y = layer(X)
-        Y.sum().backward()
+        loss = torch.einsum('...ii->', Y)
+        loss.backward()
         self.assertEqual(X.grad.shape, (self.n_batches_many +(self.n_matrices,
                             self.n_in_increase, self.n_in_increase)))
+        assert_close(X.grad, X.grad.transpose(-1, -2))
+
+
+# =============================================================================
+# Test of the ReEig layer
+# =============================================================================
+class TestReEig(TestCase):
+    """ Test the ReEig layer """
+
+    def setUp(self) -> None:
+        self.n_batches = (3,)
+        self.n_batches_many = (3, 2, 5, 7)
+        self.n_matrices = 5
+        self.n_features = 7
+        self.eps = 1e-4
+
+    def test_init(self) -> None:
+        """ Test the initialization of the ReEig layer """
+        layer = nn.ReEig(self.eps)
+        self.assertEqual(layer.eps, self.eps)
+
+    def test_forward(self) -> None:
+        """ Test the forward pass of the ReEig layer """
+        layer = nn.ReEig(self.eps)
+        n_batches_total = prod(self.n_batches)
+        X = SPDMatrices(self.n_features).random_point(
+            n_samples=self.n_matrices*n_batches_total)
+        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
+                self.n_features))
+        Y = layer(X)
+        self.assertEqual(Y.shape, (self.n_batches + (self.n_matrices,
+                            self.n_features, self.n_features)))
+
+    def test_backward(self) -> None:
+        """ Test the backward pass of the ReEig layer """
+        layer = nn.ReEig(self.eps)
+        n_batches_total = prod(self.n_batches)
+        X = SPDMatrices(self.n_features).random_point(
+            n_samples=self.n_matrices*n_batches_total)
+        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
+            self.n_features))
+        X.requires_grad = True
+        Y = layer(X)
+        loss = torch.einsum('...ii->', Y)
+        loss.backward()
+        self.assertEqual(X.grad.shape, (self.n_batches + (self.n_matrices,
+                        self.n_features, self.n_features)))
+
+
+# =============================================================================
+# LogEig layer
+# =============================================================================
+class TestLogEig(TestCase):
+    """ Test the LogEig layer """
+
+    def setUp(self) -> None:
+        self.n_batches = (3,)
+        self.n_batches_many = (3, 2, 5, 7)
+        self.n_matrices = 5
+        self.n_features = 7
+        self.eps = 1e-4
+
+    def test_init(self) -> None:
+        """ Test the initialization of the LogEig layer """
+        _ = nn.LogEig()
+
+    def test_forward(self) -> None:
+        """ Test the forward pass of the ReEig layer """
+        layer = nn.LogEig()
+        n_batches_total = prod(self.n_batches)
+        X = SPDMatrices(self.n_features).random_point(
+            n_samples=self.n_matrices*n_batches_total)
+        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
+                self.n_features))
+        Y = layer(X)
+        self.assertEqual(Y.shape, (self.n_batches + (self.n_matrices,
+                            self.n_features, self.n_features)))
+
+    def test_backward(self) -> None:
+        """ Test the backward pass of the LogEig layer """
+        layer = nn.LogEig()
+        n_batches_total = prod(self.n_batches)
+        X = SPDMatrices(self.n_features).random_point(
+            n_samples=self.n_matrices*n_batches_total)
+        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
+            self.n_features))
+        X.requires_grad = True
+        Y = layer(X)
+        loss = torch.einsum('...ii->', Y)
+        loss.backward()
+        self.assertEqual(X.grad.shape, (self.n_batches + (self.n_matrices,
+                        self.n_features, self.n_features)))
+
 
 if __name__ == '__main__':
     main()

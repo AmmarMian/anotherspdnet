@@ -1,4 +1,4 @@
-# Test of another_spdnet.functions
+# Test of another_spdnet.functions relative to bimap
 
 from anotherspdnet import functions
 from unittest import TestCase, main

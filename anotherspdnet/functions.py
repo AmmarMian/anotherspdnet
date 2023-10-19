@@ -190,7 +190,7 @@ def eig_operation(M: torch.Tensor, operation: Callable,
 
     eig_function: str
         name of the function to compute the eigenvalues and eigenvectors.
-        Choices are: "eigh", "eig" or "svd"
+        Choices are: "eigh" or "eig".
         Default is "eigh" for torch.eigh.
 
     **kwargs:
@@ -212,14 +212,12 @@ def eig_operation(M: torch.Tensor, operation: Callable,
         eigenvectors.
     """
     # Parsing the eig_function argument
-    assert eig_function in ["eigh", "eig", "svd"], \
-            f"eig_function must be in ['eigh', 'eig', 'svd'], got {eig_function}"
+    assert eig_function in ["eigh", "eig"], \
+            f"eig_function must be in ['eigh', 'eig'], got {eig_function}"
     if eig_function == "eigh":
         _eig_function = torch.linalg.eigh
-    elif eig_function == "eig":
-        _eig_function = torch.linalg.eig
     else:
-        _eig_function = torch.linalg.svd
+        _eig_function = torch.linalg.eig
 
 
     eigvals, eigvecs = _eig_function(M)
@@ -227,7 +225,59 @@ def eig_operation(M: torch.Tensor, operation: Callable,
     result = torch.einsum('...cd,...de,...ef->...cf',
                         eigvecs, _eigvals, eigvecs.transpose(-1, -2))
 
-    return eigvals, eigvecs, result
+    return torch.real(eigvals), torch.real(eigvecs), torch.real(result)
+
+
+def eig_operation_gradient_eigs(grad_output: torch.Tensor, eigvals: torch.Tensor,
+                eigvecs: torch.Tensor, operation: Callable,
+                grad_operation: Callable, **kwargs) -> \
+                        Tuple[torch.Tensor, torch.Tensor]:
+    """Gradient of an operation on the eigenvalues of a SPD matrix towards the
+    eigenvalues and eigenvectors.
+
+    Parameters
+    ----------
+    grad_output : torch.Tensor
+        gradient of the loss function wrt the output of the operation.
+        of shape (..., n_features, n_features)
+
+    eigvals : torch.Tensor
+        eigenvalues of shape (..., n_features)
+
+    eigvecs : torch.Tensor
+        eigenvectors of shape (..., n_features, n_features)
+
+    operation: Callable
+        function to apply to the eigenvalues. Any unknown keyword args passed
+        to this function are passed to the operation function.
+
+    grad_operation: Callable
+        function to apply to the gradient of the operation. Any unknown
+        keyword args passed to this function are passed to the operation
+        function.
+
+    **kwargs:
+        keyword arguments to pass to the operation and gradient functions.
+
+    Returns
+    --------
+    grad_eigvals : torch.Tensor
+        gradient of the loss with respect to the eigenvalues of the layer.
+
+    grad_eigvecs : torch.Tensor
+        gradient of the loss with respect to the eigenvectors of the layer.
+    """
+    grad_output_sym = symmetrize(grad_output)
+    eigvals_ = torch.diag_embed(operation(eigvals, **kwargs))
+    deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
+    grad_eigvectors = 2*torch.einsum(
+            '...ab,...bc,...cd->...ad', grad_output_sym, eigvecs,
+            eigvals_)
+    grad_eigvals = torch.einsum(
+            '...ab,...bc,...cd,...df->...af', deriveigvals,
+            eigvecs.transpose(-1, -2), grad_output, eigvecs)
+    return grad_eigvals, grad_eigvectors
+
 
 
 def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
@@ -259,18 +309,16 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
 
     **kwargs:
         keyword arguments to pass to the operation and gradient functions.
+
+    Returns
+    ---------
+    grad_input : torch.Tensor
+        gradient of the loss with respect to the input of the layer.
     """
-    grad_output_sym = symmetrize(grad_output)
-    eigvals_ = torch.diag_embed(operation(eigvals, **kwargs))
-    deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
     eigdiff_matrix = construct_eigdiff_matrix(eigvals)
     eigvecs_transpose = eigvecs.transpose(-1, -2)
-    grad_eigvectors = 2*torch.einsum(
-            '...ab,...bc,...cd->...ad', grad_output_sym, eigvecs,
-            eigvals_)
-    grad_eigvals = torch.einsum(
-            '...ab,...bc,...cd,...df->...af', deriveigvals,
-            eigvecs_transpose, grad_output, eigvecs)
+    grad_eigvals, grad_eigvectors = eig_operation_gradient_eigs(
+            grad_output, eigvals, eigvecs, operation, grad_operation, **kwargs)
 
     # Computing final gradient towards X
     # -eigdiff_matrix cause transposing pairwise distances change the sign only
@@ -306,7 +354,7 @@ def re_operation(eigvals: torch.Tensor, eps: float) -> torch.Tensor:
 
 
 def re_operation_gradient(eigvals: torch.Tensor, eps: float,
-                          dtype: torch.dtype) -> torch.Tensor:
+                          dtype: torch.dtype = torch.float64) -> torch.Tensor:
     """Gradient of the rectification of the eigenvalues of a SPD matrix.
 
     Parameters
@@ -318,7 +366,7 @@ def re_operation_gradient(eigvals: torch.Tensor, eps: float,
         Value for the rectification of the eigenvalues.
 
     dtype : Callable
-        Casting type of the gradient. Default is double.
+        Casting type of the gradient. Default is torch.float64.
 
     Returns
     -------
@@ -328,7 +376,7 @@ def re_operation_gradient(eigvals: torch.Tensor, eps: float,
     return (eigvals > eps).type(dtype)
 
 
-class ReEig(Function):
+class ReEigFunction(Function):
     """ReEig function."""
 
     @staticmethod
@@ -353,11 +401,12 @@ class ReEig(Function):
         """
         operation = lambda x: re_operation(x, eps)
         eigvals, eigvecs, M_rect = eig_operation(M, operation)
-        ctx.save_for_backward(eigvals, eigvecs, eps)
+        ctx.save_for_backward(eigvals, eigvecs)
+        ctx.eps = eps
         return M_rect
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx, grad_output: torch.Tensor) -> Tuple[torch.Tensor, None]:
         """Backward pass of the ReEig function.
 
         Parameters
@@ -373,17 +422,18 @@ class ReEig(Function):
         grad_input : torch.Tensor of shape (..., n_features, n_features)
             Gradient of the loss with respect to the input of the layer.
         """
+        eps = ctx.eps
         operation = lambda x: re_operation(x, eps)
         operation_gradient = lambda x: re_operation_gradient(x, eps,
                                                              grad_output.dtype)
-        eigvals, eigvecs, eps = ctx.saved_tensors
+        eigvals, eigvecs = ctx.saved_tensors
         return eig_operation_gradient(grad_output, eigvals, eigvecs,
-                                operation, operation_gradient)
+                                operation, operation_gradient), None
 
 
 # LogEig
 # -----------------------------
-class LogEig(Function):
+class LogEigFunction(Function):
     """LogEig function."""
 
     @staticmethod
