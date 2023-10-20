@@ -112,6 +112,11 @@ class TestMixRiemannianOptimizer(TestCase):
                         optimizers.ManifoldGradientDescent)
         assert isinstance(optimizer.standard_optimizer, torch.optim.Adam)
 
+        optimizer = optimizers.MixRiemannianOptimizer(
+                [self.stiefel_param, self.stiefel_param2], torch.optim.Adam,
+                lr=1e-3)
+        assert optimizer.standard_optimizer is None
+
     def test_step(self):
         """Testing the step method"""
         param_stiefel_before = self.stiefel_param.data.clone()

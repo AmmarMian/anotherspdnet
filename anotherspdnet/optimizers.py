@@ -162,22 +162,31 @@ class MixRiemannianOptimizer:
                     in LIST_OF_PARAMETERS_ON_MANIFOLDS])
         ]
 
-        self.standard_optimizer = optimizer(self.standard_parameters, lr=self.lr,
+        if len(self.standard_parameters) > 0:
+            self.standard_optimizer = optimizer(self.standard_parameters, lr=self.lr,
                                 *args, **kwargs)
+        else:
+            self.standard_optimizer = None
         self.manifold_optimizer = ManifoldGradientDescent(
                 self.manifold_parameters, lr=self.lr)
 
     def step(self) -> None:
         """Performs a single optimization step."""
-        self.standard_optimizer.step()
+        if self.standard_optimizer is not None:
+            self.standard_optimizer.step()
         self.manifold_optimizer.step()
 
     def zero_grad(self) -> None:
         """Sets the gradient of all parameters to zero."""
-        self.standard_optimizer.zero_grad()
+        if self.standard_optimizer is not None:
+            self.standard_optimizer.zero_grad()
         self.manifold_optimizer.zero_grad()
 
     def __repr__(self) -> str:
+        if self.standard_optimizer is None:
+            return f'{self.__class__.__name__}(' \
+              f'lr={self.lr}, ' \
+            f'manifold_optimizer={self.manifold_optimizer.__class__.__name__})'
         return f'{self.__class__.__name__}(' \
          f'lr={self.lr}, ' \
          f'standard_optimizer={self.standard_optimizer.__class__.__name__}, ' \
