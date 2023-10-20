@@ -79,6 +79,7 @@ class ManifoldGradientDescent():
         """Sets the gradient of all parameters to zero."""
         for parameter in self.parameters:
             if parameter.grad is not None:
+                parameter.grad.detach_()
                 parameter.grad.zero_()
 
 

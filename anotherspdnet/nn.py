@@ -7,6 +7,7 @@
 # =========================================
 
 import os
+from typing import Optional
 
 from math import prod
 import torch
@@ -50,7 +51,7 @@ class BiMap(nn.Module):
             on the Stiefel manifold.
     """
 
-    def __init__(self, n_in: int, n_out: int, n_batches: tuple = (1,),
+    def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
                 device: torch.device = torch.device('cpu')) -> None:
         """ Constructor of the BiMap layer
 
@@ -65,7 +66,7 @@ class BiMap(nn.Module):
 
         n_batches : tuple
             Number of Batches of SPD matrices. It must be a tuple
-            containing at least one batch dimension. Default is (1,).
+            containing at least one batch dimension. Default is None.
 
         device : torch.device, optional
             Device on which the layer is initialized. Default is 'cpu'.
@@ -74,17 +75,28 @@ class BiMap(nn.Module):
         self.n_in = n_in
         self.n_out = n_out
         self.n_batches = n_batches
-        n_matrices = prod(n_batches)
+        if n_batches is None:
+            n_matrices = 1
+        else:
+            n_matrices = prod(n_batches)
 
         # Initialize the weight matrix using geomstats
         if n_out > n_in:
             self.stiefel = Stiefel(n_out, n_in)
             W = self.stiefel.random_uniform(n_matrices)
-            W = W.reshape(n_batches + (n_out, n_in))
+            if n_batches is None:
+                shape = (n_out, n_in)
+            else:
+                shape = n_batches + (n_out, n_in)
+            W = W.reshape(shape)
         else:
             self.stiefel = Stiefel(n_in, n_out)
             W = self.stiefel.random_uniform(n_matrices)
-            W = W.reshape(n_batches + (n_in, n_out))
+            if n_batches is None:
+                shape = (n_in, n_out)
+            else:
+                shape = n_batches + (n_in, n_out)
+            W = W.reshape(shape)
 
         W = W.to(device)
         self.W = StiefelParameter(W, requires_grad=True)
