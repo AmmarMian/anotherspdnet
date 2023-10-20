@@ -25,9 +25,29 @@ class BiMap(nn.Module):
     """ BiMap layer in a SPDnet layer according to the paper:
         A Riemannian Network for SPD Matrix Learning, Huang et al
         AAAI Conference on Artificial Intelligence, 2017
+
+
+        Attributes
+        ----------
+        n_in : int
+            Number of input features.
+
+        n_out : int
+            Number of output features.
+
+        n_batches : tuple
+            Number of Batches of SPD matrices. It must be a tuple 
+            containing at least one batch dimension. Default is (1,).
+
+        device : torch.device
+            Device on which the layer is initialized. Default is 'cpu'.
+
+        W : StiefelParameter
+            Weight matrix of the layer. It is initialized randomly
+            on the Stiefel manifold.
     """
 
-    def __init__(self,n_in: int, n_out: int, n_batches: tuple = (1,),
+    def __init__(self, n_in: int, n_out: int, n_batches: tuple = (1,),
                 device: torch.device = torch.device('cpu')) -> None:
         """ Constructor of the BiMap layer
 
@@ -57,11 +77,11 @@ class BiMap(nn.Module):
         if n_out > n_in:
             self.stiefel = Stiefel(n_out, n_in)
             W = self.stiefel.random_uniform(n_matrices)
+            W = W.reshape(n_batches + (n_out, n_in))
         else:
             self.stiefel = Stiefel(n_in, n_out)
             W = self.stiefel.random_uniform(n_matrices)
-            W = W.transpose(-2, -1)
-        W = W.reshape(n_batches + (n_out, n_in))
+            W = W.reshape(n_batches + (n_in, n_out))
 
         W = W.to(device)
         self.W = StiefelParameter(W, requires_grad=True)
@@ -80,7 +100,11 @@ class BiMap(nn.Module):
             The output matrices is close to SPD. They need regularization with
             the ReEig layer especially if n_out > n_in.
         """
-        return BiMapFunction.apply(X, self.W)
+        if self.n_out < self.n_in:
+            _W = self.W.transpose(-2, -1)
+        else:
+            _W = self.W
+        return BiMapFunction.apply(X, _W)
 
     def __repr__(self) -> str:
         """ Representation of the layer """
@@ -98,6 +122,11 @@ class ReEig(nn.Module):
     """ ReEig layer in a SPDnet layer according to the paper:
         A Riemannian Network for SPD Matrix Learning, Huang et al
         AAAI Conference on Artificial Intelligence, 2017
+
+        Attributes
+        ----------
+        eps : float
+            Value of rectification of the eigenvalues. Default is 1e-4.
     """
 
     def __init__(self, eps: float = 1e-4) -> None:
@@ -134,8 +163,11 @@ class LogEig(nn.Module):
     """ LogEig layer in a SPDnet layer according to the paper:
         A Riemannian Network for SPD Matrix Learning, Huang et al
         AAAI Conference on Artificial Intelligence, 2017
-    """
 
+        Attributes
+        ----------
+
+    """
     def __init__(self) -> None:
         """ Constructor of the LogEig layer"""
         super().__init__()

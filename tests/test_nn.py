@@ -35,8 +35,8 @@ class TestBiMap(TestCase):
                          self.n_batches)
         self.assertEqual(layer.n_in, self.n_in_decrease)
         self.assertEqual(layer.n_out, self.n_out_decrease)
-        self.assertEqual(layer.W.shape, (self.n_batches + (self.n_out_decrease,
-                                        self.n_in_decrease)))
+        self.assertEqual(layer.W.shape, (self.n_batches + (self.n_in_decrease,
+                                        self.n_out_decrease)))
 
     def test_forward_decrease(self) -> None:
         """ Test the forward pass of the BiMap layer.
@@ -175,6 +175,23 @@ class TestBiMap(TestCase):
                             self.n_in_increase, self.n_in_increase)))
         assert_close(X.grad, X.grad.transpose(-1, -2))
 
+    def test_deviceisrespected(self) -> None:
+        """Test if the device is respected when initializing the BiMap layer"""
+        # Cuda if available
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+            layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease, 
+                         self.n_batches, device=device)
+            self.assertEqual(layer.W.device, device)
+
+            n_batches_total = prod(self.n_batches_many)
+            X = SPDMatrices(self.n_in_increase).random_point(
+                n_samples=self.n_matrices*n_batches_total)
+            X = X.reshape(self.n_batches_many +(self.n_matrices,
+                            self.n_in_increase, self.n_in_increase))
+            Y = layer(X)
+            self.assertEqual(Y.device, device)
+
 
 # =============================================================================
 # Test of the ReEig layer
@@ -220,6 +237,20 @@ class TestReEig(TestCase):
         loss.backward()
         self.assertEqual(X.grad.shape, (self.n_batches + (self.n_matrices,
                         self.n_features, self.n_features)))
+
+    def test_deviceisrespected(self) -> None:
+        """Test if the device is respected for ReEig layer"""
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+            layer = nn.ReEig(self.eps)
+            n_batches_total = prod(self.n_batches)
+            X = SPDMatrices(self.n_features).random_point(
+                n_samples=self.n_matrices*n_batches_total)
+            X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
+                self.n_features))
+            X.requires_grad = True
+            Y = layer(X)
+            assert Y.device == device
 
 
 # =============================================================================

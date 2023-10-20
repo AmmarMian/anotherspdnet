@@ -8,6 +8,10 @@
 
 import torch
 from torch import nn
+import os
+os.environ["GEOMSTATS_BACKEND"] = "pytorch"
+from geomstats.geometry.stiefel import Stiefel
+
 
 class StiefelParameter(nn.Parameter):
     """Parameter belonging in the manifold of Stiefel matrices.
@@ -22,7 +26,7 @@ class StiefelParameter(nn.Parameter):
 
         Parameters
         ----------
-        data : torch.Tensor
+        data : torch.Tensor of shape (..., n, k)
             Data of the parameter.
 
         requires_grad : bool, optional
@@ -46,13 +50,24 @@ class StiefelParameter(nn.Parameter):
                     "Stiefel matrices must be orthogonal"
             else:
                 multidim_eye = torch.eye(data.shape[-1]).reshape(
-                            (1,)*(data.ndim-2) + (data.shape[-1], data.shape[-1])
+                            (1,)*(data.ndim-2) + (data.shape[-1],
+                                                  data.shape[-1])
                         ).repeat(data.shape[:-2] + (1, 1))
                 assert torch.allclose(
                         torch.bmm(data.transpose(-2, -1), data),
                         multidim_eye), \
                     "Stiefel matrices must be orthogonal"
         return super().__new__(cls, data, requires_grad=requires_grad)
+
+    def get_manifold(self) -> Stiefel:
+        """Get the manifold of the StiefelParameter.
+
+        Returns
+        -------
+        manifold : geomstats.geometry.stiefel.Stiefel
+            The manifold of the StiefelParameter.
+        """
+        return Stiefel(*self.shape[-2:])
 
     def __repr__(self) -> str:
         """Representation of the StiefelParameter.
