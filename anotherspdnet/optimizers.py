@@ -148,23 +148,21 @@ class MixRiemannianOptimizer:
             Arguments and keyword arguments to pass to the standard optimizer.
         """
         self.lr = lr
-        self.manifold_parameters = [
-            parameter for parameter in parameters
-                if any([isinstance(parameter, parameter_possible)
-                    for parameter_possible
-                    in LIST_OF_PARAMETERS_ON_MANIFOLDS])
-        ]
-
-        self.standard_parameters = [
-            parameter for parameter in parameters
-                if not any([isinstance(parameter, parameter_possible)
-                    for parameter_possible
-                    in LIST_OF_PARAMETERS_ON_MANIFOLDS])
-        ]
+        self.parameters = list(parameters)
+        indice_manifolds = [i for i,_ in enumerate(self.parameters)
+                            if any([isinstance(_, parameter_possible)
+                                for parameter_possible
+                                in LIST_OF_PARAMETERS_ON_MANIFOLDS])]
+        indice_standard = [i for i,_ in enumerate(self.parameters)
+                        if i not in indice_manifolds]
+        self.manifold_parameters = [self.parameters[i] 
+                                    for i in indice_manifolds]
+        self.standard_parameters = [self.parameters[i] 
+                                    for i in indice_standard]
 
         if len(self.standard_parameters) > 0:
-            self.standard_optimizer = optimizer(self.standard_parameters, lr=self.lr,
-                                *args, **kwargs)
+            self.standard_optimizer = optimizer(self.standard_parameters,
+                                lr=self.lr, *args, **kwargs)
         else:
             self.standard_optimizer = None
         self.manifold_optimizer = ManifoldGradientDescent(
