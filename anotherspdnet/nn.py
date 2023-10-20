@@ -16,7 +16,10 @@ os.environ["GEOMSTATS_BACKEND"] = "pytorch"
 from geomstats.geometry.stiefel import Stiefel
 
 from .parameters import StiefelParameter
-from .functions import BiMapFunction, ReEigFunction, LogEigFunction
+from .functions import (
+        BiMapFunction, ReEigFunction, LogEigFunction, 
+        vec_batch, unvec_batch, vech_batch, unvech_batch
+)
 
 # =============================================================================
 # BiMap layer
@@ -108,7 +111,7 @@ class BiMap(nn.Module):
 
     def __repr__(self) -> str:
         """ Representation of the layer """
-        return f'BiMap({self.n_in}, {self.n_out})'
+        return f'BiMap(n_in={self.n_in}, n_out={self.n_out})'
 
     def __str__(self) -> str:
         """ String representation of the layer """
@@ -155,6 +158,14 @@ class ReEig(nn.Module):
         """
         return ReEigFunction.apply(X, self.eps)
 
+    def __repr__(self) -> str:
+        """ Representation of the layer """
+        return f'ReEig(eps={self.eps})'
+
+    def __str__(self) -> str:
+        """ String representation of the layer """
+        return self.__repr__()
+
 
 # =============================================================================
 # LogEig layer
@@ -186,5 +197,108 @@ class LogEig(nn.Module):
             The regularized SPD matrices.
         """
         return LogEigFunction.apply(X)
+
+    def __repr__(self) -> str:
+        """ Representation of the layer """
+        return f'LogEig()'
+
+    def __str__(self) -> str:
+        """ String representation of the layer """
+        return self.__repr__()
         
 
+# =============================================================================
+# Vectorization layer
+# =============================================================================
+class Vectorization(nn.Module):
+    """Vectorization of a batch of matrices according to the 
+    last two dimensions"""
+
+    def __init__(self, n_rows: int) -> None:
+        """ Constructor of the Vectorization layer
+        Parameters
+        ----------
+        n_rows : int
+            Number of rows of the matrices.
+        """
+        super().__init__()
+        self.n_rows = n_rows
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the Vectorization layer
+
+        Parameters
+        ----------
+        X: torch.Tensor of shape (..., n, k)
+            Batch of matrices.
+
+        Returns
+        -------
+        X_vec: torch.Tensor of shape (..., n*k)
+            Batch of vectorized matrices.
+        """
+        return vec_batch(X)
+
+    def inverse_transform(self, X: torch.Tensor) -> torch.Tensor:
+        """ Inverse transform of the Vectorization layer
+
+        Parameters
+        ----------
+        X: torch.Tensor of shape (..., n*k)
+            Batch of vectorized matrices.
+        Returns
+        -------
+        X_vec: torch.Tensor of shape (..., n, k)
+            Batch of matrices.
+        """
+        return unvec_batch(X, self.n_rows)
+
+    def __repr__(self) -> str:
+        """ Representation of the layer """
+        return f'Vectorization(n_rows={self.n_rows})'
+
+    def __str__(self) -> str:
+        """ String representation of the layer """
+        return self.__repr__()
+
+
+class Vech(nn.Module):
+    """Vech operator of a batch of matrices according to the 
+    last two dimensions"""
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the Vech layer
+
+        Parameters
+        ----------
+        X: torch.Tensor of shape (..., n, k)
+            Batch of matrices.
+
+        Returns
+        -------
+        X_vech: torch.Tensor of shape (..., n*(n+1)//2)
+            Batch of vech matrices.
+        """
+        return vech_batch(X)
+
+    def inverse_transform(self, X: torch.Tensor) -> torch.Tensor:
+        """Inverse transform of the Vech layer
+
+        Parameters
+        ----------
+        X: torch.Tensor of shape (..., n*(n+1)//2)
+            Batch of vech matrices.
+
+        Returns
+        -------
+        X_vech: torch.Tensor of shape (..., n, k)
+            Batch of matrices.
+        """
+        return unvech_batch(X)
+
+    def __repr__(self) -> str:
+        """ Representation of the layer """
+        return f'Vech()'
+
+    def __str__(self) -> str:
+        """ String representation of the layer """
+        return self.__repr__()

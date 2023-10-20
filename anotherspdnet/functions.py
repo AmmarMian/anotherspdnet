@@ -480,3 +480,76 @@ class LogEigFunction(Function):
                                 torch.log, operation_gradient)
 
 
+# =============================================================================
+# Vectorisation stuff
+# =============================================================================
+def vec_batch(X: torch.Tensor) -> torch.Tensor:
+    """Vectorize a batch of tensors along last two dimensions.
+
+    Parameters
+    ----------
+    X : torch.Tensor of shape (..., n, k)
+        Batch of matrices.
+
+    Returns
+    -------
+    X_vec : torch.Tensor of shape (..., n*k)
+        Batch of vectorized matrices.
+    """
+    return X.reshape(*X.shape[:-2], -1)
+
+def unvec_batch(X_vec: torch.Tensor, n: int) -> torch.Tensor:
+    """Unvectorize a batch of tensors along last dimension.
+    Parameters
+    ----------
+    X_vec : torch.Tensor of shape (..., n*k)
+        Batch of vectorized matrices.
+
+    n : int
+        Number of rows of the matrices.
+    Returns
+    -------
+    X : torch.Tensor of shape (..., n, k)
+        Batch of matrices.
+    """
+    return X_vec.reshape(*X_vec.shape[:-1], n, -1)
+
+
+def vech_batch(X: torch.Tensor) -> torch.Tensor:
+    """Vectorize the lower triangular part of a batch of square matrices.
+
+    Parameters
+    ----------
+    X : torch.Tensor of shape (..., n, n)
+        Batch of matrices.
+
+    Returns
+    -------
+    X_vech : torch.Tensor of shape (..., n*(n+1)//2)
+        Batch of vectorized matrices.
+    """
+    indices = torch.tril_indices(*X.shape[-2:])
+    return X[..., indices[0], indices[1]]
+
+
+def unvech_batch(X_vech: torch.Tensor) -> torch.Tensor:
+    """Unvectorize a batch of tensors along last dimension.
+    Parameters
+    ----------
+    X_vech : torch.Tensor of shape (..., n*(n+1)//2)
+        Batch of vectorized matrices.
+    Returns
+    -------
+    X : torch.Tensor of shape (..., n, n)
+        Batch of matrices.
+    """
+    n = 0.5 * (-1 + torch.sqrt(torch.Tensor([1 + 8 * X_vech.shape[-1]])))
+    n = int(torch.round(n))
+    indices = torch.tril_indices(n, n)
+    X = torch.zeros(*X_vech.shape[:-1], n, n, dtype=X_vech.dtype,
+                    device=X_vech.device)
+    X[..., indices[0], indices[1]] = X_vech
+    X = symmetrize(X)
+    return X
+
+

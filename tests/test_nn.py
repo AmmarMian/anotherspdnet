@@ -157,7 +157,7 @@ class TestBiMap(TestCase):
         self.assertEqual(X.grad.shape, (self.n_batches_many +(self.n_matrices,
                                 self.n_in_decrease, self.n_in_decrease)))
 
-    def test_backward_increase(self) -> None:
+    def test_backward_increase_many(self) -> None:
         """ Test the backward pass of the BiMap layer with many batches 
         dimensions. Vesion increase."""
         layer = nn.BiMap(self.n_in_increase, self.n_out_increase,
@@ -297,6 +297,58 @@ class TestLogEig(TestCase):
         self.assertEqual(X.grad.shape, (self.n_batches + (self.n_matrices,
                         self.n_features, self.n_features)))
 
+
+# =============================================================================
+# Vectorization layers
+# =============================================================================
+class TestVectorization(TestCase):
+    """Testing Vectorization layer"""
+    def setUp(self) -> None:
+        self.data = torch.randn(2, 3, 7, 4, 5)
+        self.data.requires_grad = True
+
+    def test_init(self) -> None:
+        """Test the initialization of the Vectorization layer"""
+        layer = nn.Vectorization(n_rows=4)
+        assert layer.n_rows == 4
+
+    def test_forward(self) -> None:
+        """Test the forward pass of the Vectorization layer"""
+        layer = nn.Vectorization(n_rows=4)
+        y = layer(self.data)
+        assert y.shape == (2, 3, 7, 20)
+
+    def test_inverse_transfrom(self) -> None:
+        """Test the inverse transform of the Vectorization layer"""
+        layer = nn.Vectorization(n_rows=4)
+        y = layer(self.data)
+        inv_y = layer.inverse_transform(y)
+        assert inv_y.shape == self.data.shape
+        assert inv_y.dtype == self.data.dtype
+
+class TestVech(TestCase):
+    """Testing Vech layer"""
+    def setUp(self) -> None:
+        self.data = torch.randn(2, 3, 7, 5, 5)
+        self.data.requires_grad = True
+
+    def test_init(self) -> None:
+        """Test the initialization of the Vech layer"""
+        _ = nn.Vech()
+
+    def test_forward(self) -> None:
+        """Test the forward pass of the Vech layer"""
+        layer = nn.Vech()
+        y = layer(self.data)
+        assert y.shape == (2, 3, 7, 15)
+
+    def test_inverse_transfrom(self) -> None:
+        """Test the inverse transform of the Vech layer"""
+        layer = nn.Vech()
+        y = layer(self.data)
+        inv_y = layer.inverse_transform(y)
+        assert inv_y.shape == self.data.shape
+        assert inv_y.dtype == self.data.dtype
 
 if __name__ == '__main__':
     main()
