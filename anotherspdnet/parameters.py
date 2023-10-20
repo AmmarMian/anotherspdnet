@@ -54,7 +54,8 @@ class StiefelParameter(nn.Parameter):
                                                   data.shape[-1])
                         ).repeat(data.shape[:-2] + (1, 1))
                 assert torch.allclose(
-                        torch.bmm(data.transpose(-2, -1), data),
+                        torch.einsum("...ij,...jk->...ik",
+                                     data.transpose(-2, -1), data),
                         multidim_eye), \
                     "Stiefel matrices must be orthogonal"
         return super().__new__(cls, data, requires_grad=requires_grad)
@@ -82,3 +83,12 @@ class StiefelParameter(nn.Parameter):
             string += '(requires_grad, '
         string+= f'shape={self.shape})'
         return string
+
+    def __str__(self) -> str:
+        """String representation of the StiefelParameter.
+        Returns
+        -------
+        str
+            String representation of the StiefelParameter.
+        """
+        return self.__repr__()

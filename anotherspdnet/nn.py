@@ -110,11 +110,23 @@ class BiMap(nn.Module):
         return BiMapFunction.apply(X, _W)
 
     def __repr__(self) -> str:
-        """ Representation of the layer """
+        """ Representation of the layer
+
+        Returns
+        -------
+        str
+            Representation of the layer
+        """
         return f'BiMap(n_in={self.n_in}, n_out={self.n_out})'
 
     def __str__(self) -> str:
-        """ String representation of the layer """
+        """ String representation of the layer
+
+        Returns
+        -------
+        str
+            String representation of the layer
+        """
         return self.__repr__()
 
 
@@ -159,11 +171,23 @@ class ReEig(nn.Module):
         return ReEigFunction.apply(X, self.eps)
 
     def __repr__(self) -> str:
-        """ Representation of the layer """
+        """ Representation of the layer
+
+        Returns
+        -------
+        str
+            Representation of the layer
+        """
         return f'ReEig(eps={self.eps})'
 
     def __str__(self) -> str:
-        """ String representation of the layer """
+        """ String representation of the layer
+
+        Returns
+        -------
+        str
+            String representation of the layer
+        """
         return self.__repr__()
 
 
@@ -199,11 +223,23 @@ class LogEig(nn.Module):
         return LogEigFunction.apply(X)
 
     def __repr__(self) -> str:
-        """ Representation of the layer """
+        """ Representation of the layer
+
+        Returns
+        -------
+        str
+            Representation of the layer
+        """
         return f'LogEig()'
 
     def __str__(self) -> str:
-        """ String representation of the layer """
+        """ String representation of the layer
+
+        Returns
+        -------
+        str
+            String representation of the layer
+        """
         return self.__repr__()
         
 
@@ -254,11 +290,23 @@ class Vectorization(nn.Module):
         return unvec_batch(X, self.n_rows)
 
     def __repr__(self) -> str:
-        """ Representation of the layer """
+        """ Representation of the layer
+
+        Returns
+        --------
+        str
+            Representation of the layer
+        """
         return f'Vectorization(n_rows={self.n_rows})'
 
     def __str__(self) -> str:
-        """ String representation of the layer """
+        """ String representation of the layer
+
+        Returns
+        -------
+        str
+            String representation of the layer
+        """
         return self.__repr__()
 
 
@@ -296,9 +344,21 @@ class Vech(nn.Module):
         return unvech_batch(X)
 
     def __repr__(self) -> str:
-        """ Representation of the layer """
+        """ Representation of the layer
+
+        Returns
+        --------
+        str
+            Representation of the layer
+        """
         return f'Vech()'
 
     def __str__(self) -> str:
-        """ String representation of the layer """
+        """ String representation of the layer
+
+        Returns
+        -------
+        str
+            String representation of the layer
+        """
         return self.__repr__()

@@ -9,7 +9,8 @@ anotherspdnet package.
    :maxdepth: 2
    :caption: Contents:
 
-   functions
    nn
+   optimizers
+   functions
    parameters
    utils

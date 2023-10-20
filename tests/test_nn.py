@@ -38,6 +38,18 @@ class TestBiMap(TestCase):
         self.assertEqual(layer.W.shape, (self.n_batches + (self.n_in_decrease,
                                         self.n_out_decrease)))
 
+    def test_repr(self) -> None:
+        """ Test the representation of the BiMap layer """
+        layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
+                     self.n_batches)
+        assert isinstance(repr(layer), str)
+
+    def test_str(self) -> None:
+        """ Test the string representation of the BiMap layer """
+        layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
+                 self.n_batches)
+        assert isinstance(str(layer), str)
+
     def test_forward_decrease(self) -> None:
         """ Test the forward pass of the BiMap layer.
         Version decrease."""
@@ -211,6 +223,16 @@ class TestReEig(TestCase):
         layer = nn.ReEig(self.eps)
         self.assertEqual(layer.eps, self.eps)
 
+    def test_repr(self) -> None:
+        """ Test the representation of the ReEig layer """
+        layer = nn.ReEig(self.eps)
+        assert isinstance(repr(layer), str)
+
+    def test_str(self) -> None:
+        """ Test the string representation of the ReEig layer """
+        layer = nn.ReEig(self.eps)
+        assert isinstance(str(layer), str)
+
     def test_forward(self) -> None:
         """ Test the forward pass of the ReEig layer """
         layer = nn.ReEig(self.eps)
@@ -269,6 +291,16 @@ class TestLogEig(TestCase):
     def test_init(self) -> None:
         """ Test the initialization of the LogEig layer """
         _ = nn.LogEig()
+
+    def test_repr(self) -> None:
+        """ Test the representation of the LogEig layer """
+        layer = nn.LogEig()
+        assert isinstance(repr(layer), str)
+
+    def test_str(self) -> None:
+        """ Test the string representation of the LogEig layer """
+        layer = nn.LogEig()
+        assert isinstance(str(layer), str)
 
     def test_forward(self) -> None:
         """ Test the forward pass of the ReEig layer """

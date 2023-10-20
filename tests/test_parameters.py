@@ -15,6 +15,22 @@ torch.manual_seed(seed)
 class TestStiefelParameter(TestCase):
     """ Test the StiefelParameter """
 
+    def test_repr(self):
+        """Test the __repr__ method of StiefelParameter"""
+        n_in = 70
+        n_out = 30
+        W = Stiefel(n_in, n_out).random_uniform(1)
+        W = parameters.StiefelParameter(W, verify_stiefel=True)
+        assert isinstance(W.__repr__(), str)
+
+    def test_str(self):
+        """Test the __str__ method of StiefelParameter"""
+        n_in = 70
+        n_out = 30
+        W = Stiefel(n_in, n_out).random_uniform(1)
+        W = parameters.StiefelParameter(W, verify_stiefel=True)
+        assert isinstance(W.__str__(), str)
+
     def test_decrease_dim(self):
         """Test initialization of StiefelParameter with decreasing 
         dimensions"""
