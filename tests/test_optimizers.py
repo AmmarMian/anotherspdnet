@@ -14,6 +14,59 @@ seed = 7777
 torch.manual_seed(seed)
 
 
+class Test_get_lr_with_strategy(TestCase):
+    """Testing the _get_lr_with_strategy function"""
+    def test_None(self):
+        """Testing the None strategy"""
+        lr = 1e-2
+        strategy = None
+        step_count = 100
+        decay = 0
+        assert_close(optimizers._get_lr_with_strategy(lr, strategy,
+                                                  step_count, decay),
+                 lr)
+
+    def test_inverse(self):
+        """Testing the inverse strategy"""
+        lr = 1e-2
+        strategy = "inverse"
+        step_count = 100
+        decay = 1e-3
+        assert_close(optimizers._get_lr_with_strategy(lr, strategy,
+                                              step_count, decay),
+             lr / (1 + decay * step_count))
+
+    def test_inverse_sqrt(self):
+        """Testing the inverse_sqrt strategy"""
+        lr = 1e-2
+        strategy = "inverse_sqrt"
+        step_count = 100
+        decay = 1e-3
+        assert_close(optimizers._get_lr_with_strategy(lr, strategy,
+                                          step_count, decay),
+             lr / (1 + decay * step_count)**0.5)
+
+    def test_exponential(self):
+        """Testing the exponential strategy"""
+        lr = 1e-2
+        strategy = "exponential"
+        step_count = 100
+        decay = 0.9
+        assert_close(optimizers._get_lr_with_strategy(lr, strategy,
+                                          step_count, decay),
+             lr * decay**step_count)
+
+    def test_linear(self):
+        """Testing the linear strategy"""
+        lr = 1e-2
+        strategy = "linear"
+        step_count = 100
+        decay = 1e-3
+        assert_close(optimizers._get_lr_with_strategy(lr, strategy,
+                                      step_count, decay),
+             lr * (1 - decay * step_count))
+
+    
 class TestManifoldGradientDescent(TestCase):
     """Testing the ManifoldGradientDescent optimizer"""
 

@@ -15,6 +15,46 @@ from .parameters import StiefelParameter
 LIST_OF_PARAMETERS_ON_MANIFOLDS = [StiefelParameter]
 
 
+def _get_lr_with_strategy(lr: float, strategy: str, step_count: int,
+                        decay: float) -> float:
+    """Get the learning rate with a given strategy.
+
+    Parameters
+    ----------
+    lr : float
+        Initial learning rate.
+
+    strategy : str
+        Learning rate strategy to use. Can be None, in which case the
+        learning rate is constant.
+        Other options are: "inverse", "inverse_sqrt", "exponential" or
+        "linear".
+
+    step_count : int
+        Number of steps since the beginning of the training.
+
+    decay : float
+        Decay rate of the learning rate. Actual decay depends on the
+        learning rate strategy.
+
+    Returns
+    -------
+    float
+        Learning rate with the given strategy.
+    """
+    if strategy is None:
+        return lr
+    if strategy == "inverse":
+        return lr / (1 + decay * step_count)
+    if strategy == "inverse_sqrt":
+        return lr / (1 + decay * step_count)**0.5
+    if strategy == "exponential":
+        return lr * decay**step_count
+    if strategy == "linear":
+        return lr * (1 - decay * step_count)
+    raise ValueError(f"Unknown learning rate strategy {strategy}.")
+    
+
 class ManifoldGradientDescent():
     """Generic class for a basic Riemannian gradient descent optimizer on a
     geomstats manifold.
@@ -33,7 +73,8 @@ class ManifoldGradientDescent():
 
     def __init__(self, parameters:List[nn.Parameter],
                  manifolds: Optional[List[Manifold]] = None,
-                 lr: float = 1e-2) -> None:
+                 lr: float = 1e-2, lr_strategy: Optional[str] = None,
+                 lr_decay: Optional[float] = 0) -> None:
         """Constructor of the ManifoldGradientDescent class.
 
         Parameters
@@ -49,9 +90,23 @@ class ManifoldGradientDescent():
 
         lr : float, optional
             Learning rate of the optimizer. Default is 1e-2.
+
+        lr_strategy : str, optional
+            Learning rate strategy to use. Can be None, in which case the
+            learning rate is constant. Default is None.
+            Other options are: "inverse", "inverse_sqrt", "exponential" or 
+            "linear".
+
+        lr_decay : float, optional
+            Decay rate of the learning rate. Default is 0.
+            Actual decay depends on the learning rate strategy.
         """
         self.parameters = parameters
         self.lr = lr
+        self.lr_strategy = lr_strategy
+        self.lr_decay = lr_decay
+        self.initial_lr = lr
+        self.step_count = 0
         
         if manifolds is None:
             self.manifolds = [p.get_manifold() for p in parameters]
@@ -70,18 +125,18 @@ class ManifoldGradientDescent():
     def step(self) -> None:
         """Performs a single optimization step."""
         for parameter, manifold in zip(self.parameters, self.manifolds):
+            lr = _get_lr_with_strategy(self.lr, self.lr_strategy,
+                                    self.step_count, self.lr_decay)
             parameter.data = manifold.metric.exp(
-                tangent_vec=-self.lr * parameter.grad.data,
+                tangent_vec=-lr * parameter.grad.data,
                 base_point=parameter.data
-                )
+            )
 
     def zero_grad(self) -> None:
         """Sets the gradient of all parameters to zero."""
         for parameter in self.parameters:
             if parameter.grad is not None:
-                parameter.grad.detach_()
                 parameter.grad.zero_()
-
 
     def __repr__(self) -> str:
         """Representation of the optimizer.
@@ -97,7 +152,8 @@ class ManifoldGradientDescent():
         for m in self.manifolds:
             count_manifolds[m.__class__.__name__] += 1
         string = f'{self.__class__.__name__}('
-        string += f'lr={self.lr}, '
+        string += f'lr={self.lr}, lr_strategy={self.lr_strategy}, ' \
+                f'lr_decay={self.lr_decay}, '
         for name, count in count_manifolds.items():
                 string += f'{name}({count}), '
         string = string[:-2] + ')'             
@@ -131,7 +187,8 @@ class MixRiemannianOptimizer:
 
     def __init__(self, parameters: nn.ParameterList,
                 optimizer: torch.optim.Optimizer = torch.optim.SGD,
-                 lr: float = 1e-2, *args, **kwargs) -> None:
+                lr: float = 1e-2, args_manifold: Optional[dict] = None,
+                *args, **kwargs) -> None:
         """Constructor of the MixRiemannianOptimizer class.
 
         Parameters
@@ -144,6 +201,10 @@ class MixRiemannianOptimizer:
 
         lr : float, optional
             Learning rate of the optimizer. Default is 1e-2.
+
+        args_manifold : dict, optional
+            Arguments to pass to the ManifoldGradientDescent optimizer.
+            Besides the parameters and the learning rate.
 
         *args, **kwargs
             Arguments and keyword arguments to pass to the standard optimizer.
@@ -166,8 +227,12 @@ class MixRiemannianOptimizer:
                                 lr=self.lr, *args, **kwargs)
         else:
             self.standard_optimizer = None
-        self.manifold_optimizer = ManifoldGradientDescent(
-                self.manifold_parameters, lr=self.lr)
+        if args_manifold is None:
+            self.manifold_optimizer = ManifoldGradientDescent(
+                    self.manifold_parameters, lr=self.lr)
+        else:
+            self.manifold_optimizer = ManifoldGradientDescent(
+                    self.manifold_parameters, lr=self.lr, **args_manifold)
 
     def step(self) -> None:
         """Performs a single optimization step."""
