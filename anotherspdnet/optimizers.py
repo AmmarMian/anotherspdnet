@@ -128,7 +128,7 @@ class ManifoldGradientDescent():
             lr = _get_lr_with_strategy(self.lr, self.lr_strategy,
                                     self.step_count, self.lr_decay)
             direction_tangentspace = manifold.to_tangent(
-                    parameter.grad.data, parameter.data)
+                    parameter.grad.data, parameter.data).to(parameter.data.device)
             if not hasattr(manifold.metric, "retraction"):
                 map_function = manifold.metric.exp
             else:
@@ -136,7 +136,7 @@ class ManifoldGradientDescent():
             parameter.data = map_function(
                 tangent_vec=-lr*direction_tangentspace,
                 base_point=parameter.data
-            )
+            ).to(parameter.data.device)
 
     def zero_grad(self) -> None:
         """Sets the gradient of all parameters to zero."""
