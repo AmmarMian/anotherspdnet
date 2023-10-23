@@ -127,8 +127,14 @@ class ManifoldGradientDescent():
         for parameter, manifold in zip(self.parameters, self.manifolds):
             lr = _get_lr_with_strategy(self.lr, self.lr_strategy,
                                     self.step_count, self.lr_decay)
-            parameter.data = manifold.metric.exp(
-                tangent_vec=-lr * parameter.grad.data,
+            direction_tangentspace = manifold.to_tangent(
+                    parameter.grad.data, parameter.data)
+            if not hasattr(manifold.metric, "retraction"):
+                map_function = manifold.metric.exp
+            else:
+                map_function = manifold.metric.retraction
+            parameter.data = map_function(
+                tangent_vec=-lr*direction_tangentspace,
                 base_point=parameter.data
             )
 
