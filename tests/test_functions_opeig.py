@@ -6,11 +6,10 @@ from unittest import TestCase, main, result
 from math import prod
 import torch
 from torch.testing import assert_close
-import os
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-from geomstats.geometry.spd_matrices import SPDMatrices
 
-seed = 777
+from geoopt.manifolds import SymmetricPositiveDefinite
+
+seed = 7777
 torch.manual_seed(seed)
 
 class TestEigOperation(TestCase):
@@ -20,10 +19,8 @@ class TestEigOperation(TestCase):
         """Set up the test"""
         self.batch_size = (3, 2, 4)
         self.n_features = 7
-        self.spd = SPDMatrices(self.n_features)
-        self.X = self.spd.random_point(prod(self.batch_size))
-        self.X = self.X.reshape(self.batch_size + (self.n_features,
-                                                   self.n_features))
+        self.X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
 
     def test_identity_eigh(self):
         """Test doing no operation with eigh mode"""
@@ -90,13 +87,11 @@ class TestEigOperationGradient(TestCase):
     def setUp(self) -> None:
         """Set up the test"""
         self.batch_size = (3, 2, 4)
-        self.n_features = 7
-        self.spd = SPDMatrices(self.n_features)
-        X = self.spd.random_point(prod(self.batch_size))
-        X = X.reshape(self.batch_size + (self.n_features, self.n_features))
-        self.X = X
+        self.n_features = 70
+        self.X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
         self.X.requires_grad = True
-        eigvals, eigvects = torch.linalg.eig(X)
+        eigvals, eigvects = torch.linalg.eig(self.X)
         self.eigvals = torch.real(eigvals)
         self.eigvects = torch.real(eigvects)
         self.operation = lambda x: x**4
@@ -137,10 +132,8 @@ class TestReEig(TestCase):
         """Set up the test"""
         self.batch_size = (3, 2, 4)
         self.n_features = 7
-        self.spd = SPDMatrices(self.n_features)
-        X = self.spd.random_point(prod(self.batch_size))
-        X = X.reshape(self.batch_size + (self.n_features, self.n_features))
-        self.X = X
+        self.X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
         self.X.requires_grad = True
         self.operation = lambda x: functions.re_operation(x, 1e-4)
         self.grad_operation = lambda x: functions.re_operation_gradient(x, 1e-4)
@@ -168,10 +161,8 @@ class TestLogEig(TestCase):
         """Set up the test"""
         self.batch_size = (3, 2, 4)
         self.n_features = 7
-        self.spd = SPDMatrices(self.n_features)
-        X = self.spd.random_point(prod(self.batch_size))
-        X = X.reshape(self.batch_size + (self.n_features, self.n_features))
-        self.X = X
+        self.X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
         self.X.requires_grad = True
         self.operation = torch.log
         self.grad_operation = lambda x: 1/x

@@ -21,7 +21,7 @@ extensions = ['sphinx.ext.autodoc', "sphinx.ext.viewcode",
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-autodoc_mock_imports = ['torch', 'geomstats']
+autodoc_mock_imports = ['torch']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = 'alabaster'

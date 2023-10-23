@@ -9,7 +9,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'torch>=2.0.1',
-        'geomstats>=2.0.0', 
+        'geoopt>=0.5.0',
     ],
     tests_require=[
         'pytest',

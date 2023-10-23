@@ -30,4 +30,3 @@ Dependencies
 The main dependencies of anotherSPDNet are:
 
 * `PyTorch <https://pytorch.org/>`_
-* `geomstats <https://geomstats.github.io/>`_

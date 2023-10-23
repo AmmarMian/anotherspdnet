@@ -13,14 +13,15 @@ from math import prod
 import torch
 from torch import nn
 
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-from geomstats.geometry.stiefel import Stiefel
+from geoopt.manifolds import Stiefel, Sphere
+from geoopt.tensor import ManifoldParameter
 
-from .parameters import StiefelParameter
 from .functions import (
         BiMapFunction, ReEigFunction, LogEigFunction, 
         vec_batch, unvec_batch, vech_batch, unvech_batch
 )
+from .utils import initialize_weights_sphere, initialize_weights_stiefel
+
 
 # =============================================================================
 # BiMap layer
@@ -46,12 +47,18 @@ class BiMap(nn.Module):
         device : torch.device
             Device on which the layer is initialized. Default is 'cpu'.
 
-        W : StiefelParameter
-            Weight matrix of the layer. It is initialized randomly
-            on the Stiefel manifold.
+        dtype : torch.dtype
+            Data type of the layer. Default is torch.float64.
+
+        W : geoopt.tensor.ManifoldParameter
+            Weight matrix of the layer. It is a tensor on either the Stiefel
+            or the Sphere manifold.
     """
 
     def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
+                manifold: str = 'stiefel',
+                initilization_seed: Optional[int] = None,
+                dtype: torch.dtype = torch.float32,
                 device: torch.device = torch.device('cpu')) -> None:
         """ Constructor of the BiMap layer
 
@@ -68,6 +75,16 @@ class BiMap(nn.Module):
             Number of Batches of SPD matrices. It must be a tuple
             containing at least one batch dimension. Default is None.
 
+        manifold : str, optional
+            Manifold on which the layer is initialized. Default is 'stiefel'.
+            choice between 'stiefel' and 'sphere'.
+
+        initilization_seed : int, optional
+            Seed for the initialization of the weight matrix. Default is None.
+
+        dtype : torch.dtype, optional
+            Data type of the layer. Default is torch.float64.
+
         device : torch.device, optional
             Device on which the layer is initialized. Default is 'cpu'.
         """
@@ -75,31 +92,36 @@ class BiMap(nn.Module):
         self.n_in = n_in
         self.n_out = n_out
         self.n_batches = n_batches
-        if n_batches is None:
-            n_matrices = 1
-        else:
-            n_matrices = prod(n_batches)
+        self.device = device
+        self.initilization_seed = initilization_seed
 
-        # Initialize the weight matrix using geomstats
+        if not manifold in ['stiefel', 'sphere']:
+            raise ValueError('manifold must be either stiefel or sphere')
+
+        if not isinstance(device, torch.device):
+            raise TypeError('device must be a torch.device')
+        
+        if manifold == 'stiefel':
+            self.manifold = Stiefel()
+            initialize_weights = initialize_weights_stiefel
+        else:
+            self.manifold = Sphere()
+            initialize_weights = initialize_weights_sphere
+
+        # Initialize the weight matrix using geoopt
         if n_out > n_in:
-            self.stiefel = Stiefel(n_out, n_in)
-            W = self.stiefel.random_uniform(n_matrices)
             if n_batches is None:
                 shape = (n_out, n_in)
             else:
                 shape = n_batches + (n_out, n_in)
-            W = W.reshape(shape)
         else:
-            self.stiefel = Stiefel(n_in, n_out)
-            W = self.stiefel.random_uniform(n_matrices)
             if n_batches is None:
                 shape = (n_in, n_out)
             else:
                 shape = n_batches + (n_in, n_out)
-            W = W.reshape(shape)
-
-        W = W.to(device)
-        self.W = StiefelParameter(W, requires_grad=True)
+        self.W = ManifoldParameter(torch.empty(shape, dtype=dtype), manifold=self.manifold)
+        self.W = initialize_weights(self.W, seed=initilization_seed)
+        self.W = self.W.to(device)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """ Forward pass of the BiMap layer

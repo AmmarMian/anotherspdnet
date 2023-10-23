@@ -1,6 +1,78 @@
 # Some utility functions for the project
 
+from typing import Optional
+
+import math
 import torch
+from geoopt.tensor import ManifoldParameter
+
+
+def initialize_weights_stiefel(W: ManifoldParameter,
+                               seed: Optional[int] = None) -> ManifoldParameter:
+    """Initialize the weights as being on the Stiefel manifold.
+
+    Theorem 2.2.1 in Chikuse (2003): statistics on special manifolds.
+    TODO: Verify that this is correct.
+
+    Parameters
+    ----------
+    W: geoopt.tensor.ManifoldParameter of shape (..., n, k)
+        weights to be initialized. n should be greater than k.
+
+    seed: int, optional
+        random seed for reproducibility. If None, no seed is used.
+
+    Returns
+    -------
+    W: geoopt.tensor.ManifoldParameter
+        initialized weights (same object as input with data changed)
+    """
+    if seed is not None:
+        generator = torch.Generator().manual_seed(seed)
+    else:
+        generator = None
+    _W = torch.randn(W.shape, dtype=W.dtype, device=W.device,
+                    generator=generator)
+    temp = torch.einsum('...ij,...jk->...ik', _W.transpose(-1, -2), _W)
+    eigvals, eigvec = torch.linalg.eig(temp)
+    eigvals = torch.diag_embed(1/torch.sqrt(eigvals.real))
+    invsqrt_W = torch.einsum('...ij,...jk,...kl->...il', eigvec.real, eigvals,
+                            eigvec.real.transpose(-1, -2))
+    _W = torch.einsum('...ij,...jk->...ik', _W, invsqrt_W)
+    W.data = _W
+    return W
+
+
+def initialize_weights_sphere(W: ManifoldParameter,
+                              seed: Optional[int] = None) -> ManifoldParameter:
+    """Initialize the weights as being on the sphere manifold.
+
+    Parameters
+    ----------
+    W: geoopt.tensor.ManifoldParameter of shape (..., n, k)
+        weights to be initialized
+
+    seed: int, optional
+        random seed for reproducibility. If None, no seed is used.
+
+    Returns
+    -------
+    W: geoopt.tensor.ManifoldParameter
+        initialized weights (same object as input with data changed)
+    """
+    if seed is not None:
+        generator = torch.Generator().manual_seed(seed)
+    else:
+        generator = None
+    # From TSMNet
+    # kaiming initialization std2uniformbound * gain * fan_in
+    bound = math.sqrt(3) * 1. / W.shape[-1]
+    _W = 2*torch.rand(W.shape, dtype=W.dtype, device=W.device,
+                      generator=generator)*bound - bound
+    # Satisfying constraint
+    W.data = _W / torch.norm(_W, dim=-1, keepdim=True)
+    return W
+
 
 
 def symmetrize(X: torch.Tensor) -> torch.Tensor:
