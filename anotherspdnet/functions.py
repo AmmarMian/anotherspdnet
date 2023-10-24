@@ -173,7 +173,7 @@ class BiMapFunction(Function):
 # Operations  on the eigenvalues of a SPD matrix
 # =============================================================================
 def eig_operation(M: torch.Tensor, operation: Callable,
-                  eig_function: str = "eigh", **kwargs) -> Tuple[
+                  eig_function: str = "eig", **kwargs) -> Tuple[
                           torch.Tensor, torch.Tensor,
                           torch.Tensor]:
     """Generic functions to compute an operation on the eigenvalues of a
@@ -191,7 +191,7 @@ def eig_operation(M: torch.Tensor, operation: Callable,
     eig_function: str
         name of the function to compute the eigenvalues and eigenvectors.
         Choices are: "eigh" or "eig".
-        Default is "eigh" for torch.eigh.
+        Default is "eig" for torch.eig.
 
     **kwargs:
         keyword arguments to pass to the operation function.
@@ -221,11 +221,12 @@ def eig_operation(M: torch.Tensor, operation: Callable,
 
 
     eigvals, eigvecs = _eig_function(M)
+    eigvals, eigvecs = torch.real(eigvals), torch.real(eigvecs)
     _eigvals = torch.diag_embed(operation(eigvals, **kwargs))
     result = torch.einsum('...cd,...de,...ef->...cf',
                         eigvecs, _eigvals, eigvecs.transpose(-1, -2))
 
-    return torch.real(eigvals), torch.real(eigvecs), torch.real(result)
+    return eigvals, eigvecs, result
 
 
 def eig_operation_gradient_eigs(grad_output: torch.Tensor, eigvals: torch.Tensor,
@@ -275,8 +276,8 @@ def eig_operation_gradient_eigs(grad_output: torch.Tensor, eigvals: torch.Tensor
             eigvals_)
     grad_eigvals = torch.einsum(
             '...ab,...bc,...cd,...df->...af', deriveigvals,
-            eigvecs.transpose(-1, -2), grad_output, eigvecs)
-    return grad_eigvals, grad_eigvectors
+            eigvecs.transpose(-1, -2), grad_output_sym, eigvecs)
+    return zero_offdiag(grad_eigvals), grad_eigvectors
 
 
 
@@ -321,13 +322,12 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
             grad_output, eigvals, eigvecs, operation, grad_operation, **kwargs)
 
     # Computing final gradient towards X
-    # -eigdiff_matrix cause transposing pairwise distances change the sign only
     return 2*torch.einsum('...ab,...bc,...cd->...ad',
                 eigvecs,
-                -eigdiff_matrix * symmetrize(
+                eigdiff_matrix.transpose(-1, -2) * symmetrize(
                     torch.einsum('...ab,...bc->...ac', eigvecs_transpose,
                                  grad_eigvectors)),
-                eigvecs.transpose(-1, -2)) +\
+                eigvecs_transpose) +\
             torch.einsum('...ab,...bc,...cd->...ad', eigvecs,
                 zero_offdiag(grad_eigvals), eigvecs_transpose)
 

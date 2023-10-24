@@ -87,43 +87,61 @@ class TestEigOperationGradient(TestCase):
     def setUp(self) -> None:
         """Set up the test"""
         self.batch_size = (3, 2, 4)
-        self.n_features = 70
-        self.X = SymmetricPositiveDefinite().random(
-                self.batch_size + (self.n_features, self.n_features))
-        self.X.requires_grad = True
-        eigvals, eigvects = torch.linalg.eig(self.X)
-        self.eigvals = torch.real(eigvals)
-        self.eigvects = torch.real(eigvects)
-        self.operation = lambda x: x**4
-        self.grad_operation = lambda x: 4*x**3
-        eigvals, eigvects, Y = functions.eig_operation(self.X, self.operation, "eig")
+        self.n_features = 7
+        self.operation = lambda x: x**2
+        self.grad_operation = lambda x: 2*x
+        self.loss_function = lambda x: torch.einsum('...ii->', x)
         self.grad_output = torch.eye(
                 self.n_features).reshape(
-                        1, 1, self.n_features, self.n_features).repeat(
-                    self.batch_size + (1, 1))
-        loss = torch.einsum('...ii->', Y)
-        loss.backward()
-        
+                        tuple([1 for _ in range(len(self.batch_size))]) +\
+                        (self.n_features, self.n_features)).repeat(
+                    self.batch_size + (1, 1)) 
 
     def test_gradient_eigs(self):
         """Testing the gradient towards eigenvalues and eigenvectors"""
+        # Doing forward manually to have autograd
+        X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
+        eigvals, eigvects = torch.linalg.eig(X)
+        eigvals, eigvects = torch.real(eigvals), torch.real(eigvects)
+        eigvals.requires_grad = True
+        eigvects.requires_grad = True
+        Y = torch.einsum('...ij,...jk,...kl->...il',
+                         eigvects, torch.diag_embed(self.operation(eigvals)),
+                         eigvects.transpose(-1, -2))
+        loss = self.loss_function(Y)
+        loss.backward()
+
         grad_eigvals, grad_eigvects = functions.eig_operation_gradient_eigs(
-                self.grad_output, self.eigvals, self.eigvects,
+                self.grad_output, eigvals, eigvects,
                 self.operation, self.grad_operation)
         assert grad_eigvals.shape == self.batch_size + (self.n_features,
                                                         self.n_features)
         assert grad_eigvects.shape == self.batch_size + (self.n_features,
                                                         self.n_features)
-        assert grad_eigvals.dtype == self.X.dtype
+        assert grad_eigvals.dtype == X.dtype
+
+        grad_eigvals = torch.diagonal(grad_eigvals, dim1=-2, dim2=-1)
+
+        assert_close(grad_eigvals, eigvals.grad)
+        assert_close(grad_eigvects, eigvects.grad)
+
 
     def test_grad_input(self):
         """Testing the gradient towards input"""
+        X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
+        X.requires_grad = True
+        eigvals, eigvects, Y = functions.eig_operation(
+                X, self.operation)
+        loss = self.loss_function(Y)
+        loss.backward()
         grad_X = functions.eig_operation_gradient(
-            self.grad_output, self.eigvals, self.eigvects,
+            self.grad_output, eigvals, eigvects,
             self.operation, self.grad_operation)
-        assert grad_X.shape == self.X.shape
-        assert grad_X.dtype == self.X.dtype
-        assert_close(grad_X, self.X.grad)
+        assert grad_X.shape == X.shape
+        assert grad_X.dtype == X.dtype
+        assert_close(grad_X, X.grad)
 
 
 class TestReEig(TestCase):

@@ -204,6 +204,8 @@ class TestReEig(TestCase):
         layer = nn.ReEig(self.eps)
         self.assertEqual(layer.eps, self.eps)
 
+        _ = nn.ReEig(self.eps, use_autograd=True)
+
     def test_repr(self) -> None:
         """ Test the representation of the ReEig layer """
         layer = nn.ReEig(self.eps)
@@ -266,6 +268,7 @@ class TestLogEig(TestCase):
     def test_init(self) -> None:
         """ Test the initialization of the LogEig layer """
         _ = nn.LogEig()
+        _ = nn.LogEig(use_autograd=True)
 
     def test_repr(self) -> None:
         """ Test the representation of the LogEig layer """
@@ -312,20 +315,19 @@ class TestVectorization(TestCase):
 
     def test_init(self) -> None:
         """Test the initialization of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
-        assert layer.n_rows == 4
+        _ = nn.Vectorization()
 
     def test_forward(self) -> None:
         """Test the forward pass of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
+        layer = nn.Vectorization()
         y = layer(self.data)
         assert y.shape == (2, 3, 7, 20)
 
     def test_inverse_transfrom(self) -> None:
         """Test the inverse transform of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
+        layer = nn.Vectorization()
         y = layer(self.data)
-        inv_y = layer.inverse_transform(y)
+        inv_y = layer.inverse_transform(y, self.data.shape[-2])
         assert inv_y.shape == self.data.shape
         assert inv_y.dtype == self.data.dtype
 

@@ -18,7 +18,8 @@ from geoopt.tensor import ManifoldParameter
 
 from .functions import (
         BiMapFunction, ReEigFunction, LogEigFunction, 
-        vec_batch, unvec_batch, vech_batch, unvech_batch
+        vec_batch, unvec_batch, vech_batch, unvech_batch,
+        eig_operation
 )
 from .utils import initialize_weights_sphere, initialize_weights_stiefel
 
@@ -178,16 +179,21 @@ class ReEig(nn.Module):
             Value of rectification of the eigenvalues. Default is 1e-4.
     """
 
-    def __init__(self, eps: float = 1e-4) -> None:
+    def __init__(self, eps: float = 1e-4, use_autograd: bool = False) -> None:
         """ Constructor of the ReEig layer
 
         Parameters
         ----------
         eps : float, optional
             Value of rectification of the eigenvalues. Default is 1e-4.
+
+        use_autograd : bool, optional
+            Use torch autograd for the computation of the gradient rather than
+            the analytical formula. Default is False.
         """
         super().__init__()
         self.eps = eps
+        self.use_autograd = use_autograd
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -202,6 +208,11 @@ class ReEig(nn.Module):
         Y : torch.Tensor of shape (..., n_features, n_features)
             The regularized SPD matrices.
         """
+        if self.use_autograd:
+            operation = lambda X: torch.nn.functional.threshold(
+                    X, self.eps, self.eps)
+            _, _, res = eig_operation(X, operation)
+            return res
         return ReEigFunction.apply(X, self.eps)
 
     def __repr__(self) -> str:
@@ -212,7 +223,7 @@ class ReEig(nn.Module):
         str
             Representation of the layer
         """
-        return f'ReEig(eps={self.eps})'
+        return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd})'
 
     def __str__(self) -> str:
         """ String representation of the layer
@@ -237,9 +248,17 @@ class LogEig(nn.Module):
         ----------
 
     """
-    def __init__(self) -> None:
-        """ Constructor of the LogEig layer"""
+    def __init__(self, use_autograd: bool = False) -> None:
+        """ Constructor of the LogEig layer
+
+        Parameters
+        ----------
+        use_autograd : bool, optional
+            Use torch autograd for the computation of the gradient rather than
+            the analytical formula. Default is False.
+        """
         super().__init__()
+        self.use_autograd = use_autograd
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -254,6 +273,10 @@ class LogEig(nn.Module):
         Y : torch.Tensor of shape (..., n_features, n_features)
             The regularized SPD matrices.
         """
+        if self.use_autograd:
+            operation = lambda X: torch.log(X)
+            _, _, res = eig_operation(X, operation)
+            return res
         return LogEigFunction.apply(X)
 
     def __repr__(self) -> str:
@@ -264,7 +287,7 @@ class LogEig(nn.Module):
         str
             Representation of the layer
         """
-        return f'LogEig()'
+        return f'LogEig(auto_grad={self.use_autograd})'
 
     def __str__(self) -> str:
         """ String representation of the layer
@@ -284,15 +307,10 @@ class Vectorization(nn.Module):
     """Vectorization of a batch of matrices according to the 
     last two dimensions"""
 
-    def __init__(self, n_rows: int) -> None:
-        """ Constructor of the Vectorization layer
-        Parameters
-        ----------
-        n_rows : int
-            Number of rows of the matrices.
-        """
+    def __init__(self) -> None:
+        """Vectorization of a batch of matrices according to the 
+        last two dimensions"""
         super().__init__()
-        self.n_rows = n_rows
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the Vectorization layer
@@ -309,19 +327,23 @@ class Vectorization(nn.Module):
         """
         return vec_batch(X)
 
-    def inverse_transform(self, X: torch.Tensor) -> torch.Tensor:
+    def inverse_transform(self, X: torch.Tensor, n_rows: int) -> torch.Tensor:
         """ Inverse transform of the Vectorization layer
 
         Parameters
         ----------
-        X: torch.Tensor of shape (..., n*k)
+        X: torch.Tensor of shape (..., n_rows*k)
             Batch of vectorized matrices.
+
+        n_rows: int
+            Number of rows of the original matrices.
+
         Returns
         -------
-        X_vec: torch.Tensor of shape (..., n, k)
+        X_vec: torch.Tensor of shape (..., n_rows, k)
             Batch of matrices.
         """
-        return unvec_batch(X, self.n_rows)
+        return unvec_batch(X, n_rows)
 
     def __repr__(self) -> str:
         """ Representation of the layer
@@ -331,7 +353,7 @@ class Vectorization(nn.Module):
         str
             Representation of the layer
         """
-        return f'Vectorization(n_rows={self.n_rows})'
+        return 'Vectorization()'
 
     def __str__(self) -> str:
         """ String representation of the layer
