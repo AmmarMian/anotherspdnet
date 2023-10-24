@@ -19,7 +19,7 @@ from geoopt.tensor import ManifoldParameter
 from .functions import (
         BiMapFunction, ReEigFunction, LogEigFunction, 
         vec_batch, unvec_batch, vech_batch, unvech_batch,
-        eig_operation
+        eig_operation, biMap
 )
 from .utils import initialize_weights_sphere, initialize_weights_stiefel
 
@@ -60,7 +60,8 @@ class BiMap(nn.Module):
                 manifold: str = 'stiefel',
                 initilization_seed: Optional[int] = None,
                 dtype: torch.dtype = torch.float32,
-                device: torch.device = torch.device('cpu')) -> None:
+                device: torch.device = torch.device('cpu'),
+                use_autograd: bool = False) -> None:
         """ Constructor of the BiMap layer
 
         Parameters
@@ -88,6 +89,10 @@ class BiMap(nn.Module):
 
         device : torch.device, optional
             Device on which the layer is initialized. Default is 'cpu'.
+
+        use_autograd : bool, optional
+            Use torch autograd for the computation of the gradient rather than
+            the analytical formula. Default is False.
         """
         super().__init__()
         self.n_in = n_in
@@ -95,6 +100,8 @@ class BiMap(nn.Module):
         self.n_batches = n_batches
         self.device = device
         self.initilization_seed = initilization_seed
+        self.dtype = dtype
+        self.use_autograd = use_autograd
 
         if not manifold in ['stiefel', 'sphere']:
             raise ValueError('manifold must be either stiefel or sphere')
@@ -142,6 +149,9 @@ class BiMap(nn.Module):
             _W = self.W.transpose(-2, -1)
         else:
             _W = self.W
+
+        if self.use_autograd:
+            return biMap(X, _W)
         return BiMapFunction.apply(X, _W)
 
     def __repr__(self) -> str:
