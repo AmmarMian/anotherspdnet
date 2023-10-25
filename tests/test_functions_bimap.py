@@ -107,8 +107,8 @@ class TestBiMapGradient(TestCase):
 
         # Comparing to autograd
         loss.backward()
-        assert_close(X.grad, grad_X, atol=1e-4)
-        assert_close(W.grad, grad_W, atol=1e-4)
+        assert_close(X.grad, grad_X, atol=1e-4, rtol=1e-4)
+        assert_close(W.grad, grad_W, atol=1e-4, rtol=1e-4)
 
     def test_manybatches_decrease(self):
         """Test with many dimensions of batches.
@@ -131,8 +131,8 @@ class TestBiMapGradient(TestCase):
 
         # Comparing to autograd
         loss.backward()
-        assert_close(X.grad, grad_X, atol=1e-4)
-        assert_close(W.grad, grad_W, atol=1e-4)
+        assert_close(X.grad, grad_X, atol=1e-4, rtol=1e-4)
+        assert_close(W.grad, grad_W, atol=1e-4, rtol=1e-4)
 
     def test_basic2D_increase(self):
         """Test basic operation on 2D matrices.
@@ -175,8 +175,8 @@ class TestBiMapGradient(TestCase):
 
         # Comparing to autograd
         loss.backward()
-        assert_close(X.grad, grad_X, atol=1e-4)
-        assert_close(W.grad, grad_W, atol=1e-4)
+        assert_close(X.grad, grad_X, atol=1e-4, rtol=1e-4)
+        assert_close(W.grad, grad_W, atol=1e-4, rtol=1e-4)
 
 
 class TestBiMapTorchFunction(TestCase):
