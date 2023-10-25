@@ -61,7 +61,7 @@ class BiMap(nn.Module):
                 initilization_seed: Optional[int] = None,
                 dtype: torch.dtype = torch.float32,
                 device: torch.device = torch.device('cpu'),
-                use_autograd: bool = False) -> None:
+                use_autograd: bool = True) -> None:
         """ Constructor of the BiMap layer
 
         Parameters
@@ -92,7 +92,7 @@ class BiMap(nn.Module):
 
         use_autograd : bool, optional
             Use torch autograd for the computation of the gradient rather than
-            the analytical formula. Default is False.
+            the analytical formula. Default is True.
         """
         super().__init__()
         self.n_in = n_in
@@ -189,7 +189,7 @@ class ReEig(nn.Module):
             Value of rectification of the eigenvalues. Default is 1e-4.
     """
 
-    def __init__(self, eps: float = 1e-4, use_autograd: bool = False) -> None:
+    def __init__(self, eps: float = 1e-4, use_autograd: bool = True) -> None:
         """ Constructor of the ReEig layer
 
         Parameters
@@ -258,7 +258,7 @@ class LogEig(nn.Module):
         ----------
 
     """
-    def __init__(self, use_autograd: bool = False) -> None:
+    def __init__(self, use_autograd: bool = True) -> None:
         """ Constructor of the LogEig layer
 
         Parameters
