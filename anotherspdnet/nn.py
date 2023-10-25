@@ -153,6 +153,64 @@ class BiMap(nn.Module):
 # =============================================================================
 # ReEig layer
 # =============================================================================
+class ReEigBias(nn.Module):
+
+    def __init__(self, dim: int, eps: float = 1e-4, 
+                 use_autograd: bool = True,
+                 dtype: torch.dtype = torch.float64) -> None:
+        """ ReEig layer with a bias term.
+
+        Parameters
+        ----------
+        dim : int
+            Dimension of the SPD matrices.
+
+        eps : float, optional
+            Value of rectification of the eigenvalues. Default is 1e-4.
+
+        use_autograd : bool, optional
+            Use torch autograd for the computation of the gradient rather than
+            the analytical formula. Default is True.
+            FOR NOW: without autograd, the layer is not implemented.
+
+        dtype : torch.dtype, optional
+            Data type of the layer. Default is torch.float64.
+        """
+
+        if not use_autograd:
+            raise NotImplementedError(
+                    'Without autograd, the layer is not implemented (yet).')
+
+        super().__init__()
+        self.eps = eps
+        self.dim = dim
+        self.use_autograd = use_autograd
+        self.dtype = dtype
+
+        # Initialize the bias term
+        self.bias = nn.Parameter(torch.empty(dim, dtype=self.dtype))
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """Forward pass of the ReEig layer with bias
+
+        Parameters
+        ----------
+        X : torch.Tensor of shape (..., n_features, n_features)
+            Batches of input almost-SPD matrices.
+
+        Returns
+        -------
+        Y : torch.Tensor of shape (..., n_features, n_features)
+            The regularized SPD matrices.
+        """
+        assert X.shape[-1] == self.dim, (
+                f'Input matrices must have dimension {self.dim}')
+        operation = lambda X: torch.nn.functional.threshold(
+                X+self.bias, self.eps, self.eps)
+        _, _, res = eig_operation(X, operation)
+        return res
+
+
 class ReEig(nn.Module):
 
     def __init__(self, eps: float = 1e-4, use_autograd: bool = True) -> None:
