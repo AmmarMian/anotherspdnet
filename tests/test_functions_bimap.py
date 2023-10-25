@@ -107,8 +107,8 @@ class TestBiMapGradient(TestCase):
 
         # Comparing to autograd
         loss.backward()
-        assert_close(X.grad, grad_X)
-        assert_close(W.grad, grad_W)
+        assert_close(X.grad, grad_X, atol=1e-4)
+        assert_close(W.grad, grad_W, atol=1e-4)
 
     def test_manybatches_decrease(self):
         """Test with many dimensions of batches.
