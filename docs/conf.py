@@ -20,8 +20,15 @@ extensions = ['sphinx.ext.autodoc', "sphinx.ext.viewcode",
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+autodoc_typehints = 'signature'
+autodoc_default_options = {
+    'members':           True,
+    'undoc-members':     True,
+    'member-order':      'bysource',
+}
+autodoc_mock_imports = ['torch', 'geoopt']
+napoleon_include_init_with_doc = True
 
-autodoc_mock_imports = ['torch', 'geomstats']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 html_theme = 'alabaster'

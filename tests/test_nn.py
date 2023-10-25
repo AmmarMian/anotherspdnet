@@ -3,12 +3,11 @@
 from anotherspdnet import nn
 from unittest import TestCase, main
 
-from math import prod
 import torch
 from torch.testing import assert_close
 import os
-os.environ["GEOMSTATS_BACKEND"] = "pytorch"
-from geomstats.geometry.spd_matrices import SPDMatrices
+
+from geoopt.manifolds import SymmetricPositiveDefinite, Sphere
 
 seed = 7777
 torch.manual_seed(seed)
@@ -55,11 +54,9 @@ class TestBiMap(TestCase):
         Version decrease."""
         layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
                          self.n_batches)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_in_decrease).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_in_decrease,
-                    self.n_in_decrease))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_in_decrease,
+                       self.n_in_decrease))
 
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches +(self.n_matrices,
@@ -70,11 +67,9 @@ class TestBiMap(TestCase):
         Version increase."""
         layer = nn.BiMap(self.n_in_increase, self.n_out_increase,
                          self.n_batches)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_in_increase).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches +(self.n_matrices, self.n_in_increase,
-                self.n_in_increase))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_in_increase,
+                                self.n_in_increase))
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches + (self.n_matrices,
                             self.n_out_increase, self.n_out_increase)))
@@ -84,11 +79,9 @@ class TestBiMap(TestCase):
         Vesion decrease."""
         layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
                          self.n_batches)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_in_decrease).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_in_decrease,
-                    self.n_in_decrease))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_in_decrease,
+                       self.n_in_decrease))
         X.requires_grad = True
         Y = layer(X)
         Y.sum().backward()
@@ -100,11 +93,9 @@ class TestBiMap(TestCase):
         Version increase."""
         layer = nn.BiMap(self.n_in_increase, self.n_out_increase,
                          self.n_batches)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_in_increase).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches +(self.n_matrices, self.n_in_increase,
-                self.n_in_increase))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_in_increase,
+                    self.n_in_increase))
         X.requires_grad = True
         Y = layer(X)
         Y.sum().backward()
@@ -129,12 +120,10 @@ class TestBiMap(TestCase):
         dimensions. Version decrease."""
         layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
                          self.n_batches_many)
-        n_batches_total = prod(self.n_batches_many)
-        X = SPDMatrices(self.n_in_decrease).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches_many + (self.n_matrices, self.n_in_decrease,
-                    self.n_in_decrease))
 
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches_many + (self.n_matrices, self.n_in_decrease,
+                       self.n_in_decrease))
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches_many +(self.n_matrices,
                                 self.n_out_decrease, self.n_out_decrease)))
@@ -144,11 +133,9 @@ class TestBiMap(TestCase):
         dimensions. Version increase."""
         layer = nn.BiMap(self.n_in_increase, self.n_out_increase,
                          self.n_batches_many)
-        n_batches_total = prod(self.n_batches_many)
-        X = SPDMatrices(self.n_in_increase).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches_many +(self.n_matrices, self.n_in_increase,
-                self.n_in_increase))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches_many + (self.n_matrices, self.n_in_increase,
+                    self.n_in_increase))
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches_many + (self.n_matrices,
                             self.n_out_increase, self.n_out_increase)))
@@ -158,11 +145,9 @@ class TestBiMap(TestCase):
         dimensions. Version decrease."""
         layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease,
                          self.n_batches_many)
-        n_batches_total = prod(self.n_batches_many)
-        X = SPDMatrices(self.n_in_decrease).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches_many + (self.n_matrices, self.n_in_decrease,
-                    self.n_in_decrease))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches_many + (self.n_matrices, self.n_in_decrease,
+                       self.n_in_decrease))
         X.requires_grad = True
         Y = layer(X)
         Y.sum().backward()
@@ -174,11 +159,9 @@ class TestBiMap(TestCase):
         dimensions. Vesion increase."""
         layer = nn.BiMap(self.n_in_increase, self.n_out_increase,
                          self.n_batches_many)
-        n_batches_total = prod(self.n_batches_many)
-        X = SPDMatrices(self.n_in_increase).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches_many +(self.n_matrices, self.n_in_increase,
-                self.n_in_increase))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches_many + (self.n_matrices, self.n_in_increase,
+                    self.n_in_increase))
         X.requires_grad = True
         Y = layer(X)
         loss = torch.einsum('...ii->', Y)
@@ -196,11 +179,9 @@ class TestBiMap(TestCase):
                          self.n_batches, device=device)
             self.assertEqual(layer.W.device, device)
 
-            n_batches_total = prod(self.n_batches_many)
-            X = SPDMatrices(self.n_in_increase).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-            X = X.reshape(self.n_batches_many +(self.n_matrices,
-                            self.n_in_increase, self.n_in_increase))
+            X = SymmetricPositiveDefinite().random(
+                    self.n_batches + (self.n_matrices, self.n_in_decrease,
+                        self.n_in_decrease)).to(device)
             Y = layer(X)
             self.assertEqual(Y.device, device)
 
@@ -223,6 +204,8 @@ class TestReEig(TestCase):
         layer = nn.ReEig(self.eps)
         self.assertEqual(layer.eps, self.eps)
 
+        _ = nn.ReEig(self.eps, use_autograd=True)
+
     def test_repr(self) -> None:
         """ Test the representation of the ReEig layer """
         layer = nn.ReEig(self.eps)
@@ -236,11 +219,9 @@ class TestReEig(TestCase):
     def test_forward(self) -> None:
         """ Test the forward pass of the ReEig layer """
         layer = nn.ReEig(self.eps)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_features).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
-                self.n_features))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_features,
+                       self.n_features))
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches + (self.n_matrices,
                             self.n_features, self.n_features)))
@@ -248,11 +229,9 @@ class TestReEig(TestCase):
     def test_backward(self) -> None:
         """ Test the backward pass of the ReEig layer """
         layer = nn.ReEig(self.eps)
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_features).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
-            self.n_features))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_features,
+                       self.n_features))
         X.requires_grad = True
         Y = layer(X)
         loss = torch.einsum('...ii->', Y)
@@ -265,11 +244,9 @@ class TestReEig(TestCase):
         if torch.cuda.is_available():
             device = torch.device('cuda')
             layer = nn.ReEig(self.eps)
-            n_batches_total = prod(self.n_batches)
-            X = SPDMatrices(self.n_features).random_point(
-                n_samples=self.n_matrices*n_batches_total)
-            X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
-                self.n_features))
+            X = SymmetricPositiveDefinite().random(
+                    self.n_batches + (self.n_matrices, self.n_features,
+                        self.n_features)).to(device)
             X.requires_grad = True
             Y = layer(X)
             assert Y.device == device
@@ -291,6 +268,7 @@ class TestLogEig(TestCase):
     def test_init(self) -> None:
         """ Test the initialization of the LogEig layer """
         _ = nn.LogEig()
+        _ = nn.LogEig(use_autograd=True)
 
     def test_repr(self) -> None:
         """ Test the representation of the LogEig layer """
@@ -305,11 +283,9 @@ class TestLogEig(TestCase):
     def test_forward(self) -> None:
         """ Test the forward pass of the ReEig layer """
         layer = nn.LogEig()
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_features).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
-                self.n_features))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_features,
+                       self.n_features))
         Y = layer(X)
         self.assertEqual(Y.shape, (self.n_batches + (self.n_matrices,
                             self.n_features, self.n_features)))
@@ -317,11 +293,9 @@ class TestLogEig(TestCase):
     def test_backward(self) -> None:
         """ Test the backward pass of the LogEig layer """
         layer = nn.LogEig()
-        n_batches_total = prod(self.n_batches)
-        X = SPDMatrices(self.n_features).random_point(
-            n_samples=self.n_matrices*n_batches_total)
-        X = X.reshape(self.n_batches + (self.n_matrices, self.n_features,
-            self.n_features))
+        X = SymmetricPositiveDefinite().random(
+                self.n_batches + (self.n_matrices, self.n_features,
+                       self.n_features))
         X.requires_grad = True
         Y = layer(X)
         loss = torch.einsum('...ii->', Y)
@@ -341,20 +315,19 @@ class TestVectorization(TestCase):
 
     def test_init(self) -> None:
         """Test the initialization of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
-        assert layer.n_rows == 4
+        _ = nn.Vectorization()
 
     def test_forward(self) -> None:
         """Test the forward pass of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
+        layer = nn.Vectorization()
         y = layer(self.data)
         assert y.shape == (2, 3, 7, 20)
 
     def test_inverse_transfrom(self) -> None:
         """Test the inverse transform of the Vectorization layer"""
-        layer = nn.Vectorization(n_rows=4)
+        layer = nn.Vectorization()
         y = layer(self.data)
-        inv_y = layer.inverse_transform(y)
+        inv_y = layer.inverse_transform(y, self.data.shape[-2])
         assert inv_y.shape == self.data.shape
         assert inv_y.dtype == self.data.dtype
 
