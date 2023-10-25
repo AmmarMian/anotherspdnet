@@ -10,7 +10,5 @@ anotherspdnet package.
    :caption: Contents:
 
    nn
-   optimizers
    functions
-   parameters
    utils

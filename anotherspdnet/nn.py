@@ -28,33 +28,6 @@ from .utils import initialize_weights_sphere, initialize_weights_stiefel
 # BiMap layer
 # =============================================================================
 class BiMap(nn.Module):
-    """ BiMap layer in a SPDnet layer according to the paper:
-        A Riemannian Network for SPD Matrix Learning, Huang et al
-        AAAI Conference on Artificial Intelligence, 2017
-
-
-        Attributes
-        ----------
-        n_in : int
-            Number of input features.
-
-        n_out : int
-            Number of output features.
-
-        n_batches : tuple
-            Number of Batches of SPD matrices. It must be a tuple 
-            containing at least one batch dimension. Default is (1,).
-
-        device : torch.device
-            Device on which the layer is initialized. Default is 'cpu'.
-
-        dtype : torch.dtype
-            Data type of the layer. Default is torch.float64.
-
-        W : geoopt.tensor.ManifoldParameter
-            Weight matrix of the layer. It is a tensor on either the Stiefel
-            or the Sphere manifold.
-    """
 
     def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
                 manifold: str = 'stiefel',
@@ -62,7 +35,9 @@ class BiMap(nn.Module):
                 dtype: torch.dtype = torch.float32,
                 device: torch.device = torch.device('cpu'),
                 use_autograd: bool = True) -> None:
-        """ Constructor of the BiMap layer
+        """ BiMap layer in a SPDnet layer according to the paper:
+            A Riemannian Network for SPD Matrix Learning, Huang et al
+            AAAI Conference on Artificial Intelligence, 2017
 
         Parameters
         ----------
@@ -179,18 +154,11 @@ class BiMap(nn.Module):
 # ReEig layer
 # =============================================================================
 class ReEig(nn.Module):
-    """ ReEig layer in a SPDnet layer according to the paper:
-        A Riemannian Network for SPD Matrix Learning, Huang et al
-        AAAI Conference on Artificial Intelligence, 2017
-
-        Attributes
-        ----------
-        eps : float
-            Value of rectification of the eigenvalues. Default is 1e-4.
-    """
 
     def __init__(self, eps: float = 1e-4, use_autograd: bool = True) -> None:
-        """ Constructor of the ReEig layer
+        """ ReEig layer in a SPDnet layer according to the paper:
+            A Riemannian Network for SPD Matrix Learning, Huang et al
+            AAAI Conference on Artificial Intelligence, 2017
 
         Parameters
         ----------
@@ -250,16 +218,11 @@ class ReEig(nn.Module):
 # LogEig layer
 # =============================================================================
 class LogEig(nn.Module):
-    """ LogEig layer in a SPDnet layer according to the paper:
-        A Riemannian Network for SPD Matrix Learning, Huang et al
-        AAAI Conference on Artificial Intelligence, 2017
 
-        Attributes
-        ----------
-
-    """
     def __init__(self, use_autograd: bool = True) -> None:
-        """ Constructor of the LogEig layer
+        """ LogEig layer in a SPDnet layer according to the paper:
+            A Riemannian Network for SPD Matrix Learning, Huang et al
+            AAAI Conference on Artificial Intelligence, 2017
 
         Parameters
         ----------
@@ -314,8 +277,6 @@ class LogEig(nn.Module):
 # Vectorization layer
 # =============================================================================
 class Vectorization(nn.Module):
-    """Vectorization of a batch of matrices according to the 
-    last two dimensions"""
 
     def __init__(self) -> None:
         """Vectorization of a batch of matrices according to the 
@@ -377,8 +338,12 @@ class Vectorization(nn.Module):
 
 
 class Vech(nn.Module):
-    """Vech operator of a batch of matrices according to the 
-    last two dimensions"""
+    
+    def __init__(self) -> None:
+        """Vech operator of a batch of matrices according to the 
+        last two dimensions"""
+        super().__init__()
+
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the Vech layer
 
