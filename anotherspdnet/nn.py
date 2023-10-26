@@ -31,7 +31,7 @@ class BiMap(nn.Module):
 
     def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
                 manifold: str = 'stiefel',
-                initilization_seed: Optional[int] = None,
+                seed: Optional[int] = None,
                 dtype: torch.dtype = torch.float32,
                 device: torch.device = torch.device('cpu'),
                 use_autograd: bool = True) -> None:
@@ -56,7 +56,7 @@ class BiMap(nn.Module):
             Manifold on which the layer is initialized. Default is 'stiefel'.
             choice between 'stiefel' and 'sphere'.
 
-        initilization_seed : int, optional
+        seed : int, optional
             Seed for the initialization of the weight matrix. Default is None.
 
         dtype : torch.dtype, optional
@@ -74,7 +74,7 @@ class BiMap(nn.Module):
         self.n_out = n_out
         self.n_batches = n_batches
         self.device = device
-        self.initilization_seed = initilization_seed
+        self.seed = seed
         self.dtype = dtype
         self.use_autograd = use_autograd
 
@@ -103,7 +103,7 @@ class BiMap(nn.Module):
             else:
                 shape = n_batches + (n_in, n_out)
         self.W = ManifoldParameter(torch.empty(shape, dtype=dtype), manifold=self.manifold)
-        self.W = initialize_weights(self.W, seed=initilization_seed)
+        self.W = initialize_weights(self.W, seed=seed)
         self.W = self.W.to(device)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -137,7 +137,9 @@ class BiMap(nn.Module):
         str
             Representation of the layer
         """
-        return f'BiMap(n_in={self.n_in}, n_out={self.n_out})'
+        return f'BiMap(n_in={self.n_in}, n_out={self.n_out}, " \
+                    f"shape={self.W.shape}, use_autograd={self.use_autograd})' \
+                    f'seed={self.seed})'
 
     def __str__(self) -> str:
         """ String representation of the layer
@@ -157,7 +159,8 @@ class ReEigBias(nn.Module):
 
     def __init__(self, dim: int, eps: float = 1e-4, 
                  use_autograd: bool = True,
-                 dtype: torch.dtype = torch.float64) -> None:
+                 dtype: torch.dtype = torch.float64,
+                 seed: Optional[int] = None) -> None:
         """ ReEig layer with a bias term.
 
         Parameters
@@ -175,6 +178,9 @@ class ReEigBias(nn.Module):
 
         dtype : torch.dtype, optional
             Data type of the layer. Default is torch.float64.
+
+        seed : int, optional
+            Seed for the initialization of the bias term. Default is None.
         """
 
         if not use_autograd:
@@ -186,9 +192,12 @@ class ReEigBias(nn.Module):
         self.dim = dim
         self.use_autograd = use_autograd
         self.dtype = dtype
+        self.seed = seed
 
         # Initialize the bias term
-        self.bias = nn.Parameter(torch.empty(dim, dtype=self.dtype))
+        init_bias = torch.randn(dim, dtype=self.dtype,
+                                generator=torch.Generator().manual_seed(seed))
+        self.bias = nn.Parameter(init_bias)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer with bias
@@ -209,6 +218,17 @@ class ReEigBias(nn.Module):
                 X+self.bias, self.eps, self.eps)
         _, _, res = eig_operation(X, operation)
         return res
+
+
+    def __repr__(self) -> str:
+        """ Representation of the layer
+        Returns
+        -------
+        str
+            Representation of the layer
+        """
+        return f'ReEigBias(dim={self.dim}, eps={self.eps}, " \
+                f"use_autograd={self.use_autograd}, seed={self.seed})'
 
 
 class ReEig(nn.Module):
