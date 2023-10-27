@@ -118,8 +118,17 @@ class EigenvaluesLogger:
                 log_file = os.path.join(self.storage_path,
                             self.log_file_basename +
                             f'_{layer_number}_bias.csv')
-                with open(log_file, 'a') as f:
-                    for sample in range(eig.shape[0]):
+                # Check if norm not already logged
+                if os.stat(log_file).st_size == 0:
+                    write_bias = True
+                else:
+                    with open(log_file, 'r') as f:
+                        last_line = f.readlines()[-1]
+                    write_bias = last_line.split(self.separator)[0] != \
+                            f'{self.step_name}'
+
+                if write_bias:
+                    with open(log_file, 'a') as f:
                         f.write(f'{self.step_name}{self.separator}'
                                 f'{torch.norm(layer.bias)}\n')
 
@@ -159,8 +168,16 @@ class EigenvaluesLogger:
                     log_file = os.path.join(self.storage_path,
                                 self.log_file_basename +
                                 f'_{layer_number}_bias.csv')
-                    with open(log_file, 'a') as f:
-                        for sample in range(eig.shape[0]):
+                    # Check if norm not already logged
+                    if os.stat(log_file).st_size == 0:
+                        write_bias = True
+                    else:
+                        with open(log_file, 'r') as f:
+                            last_line = f.readlines()[-1]
+                        write_bias = last_line.split(self.separator)[0] != \
+                                f'{self.step_name}'
+                    if write_bias:
+                        with open(log_file, 'a') as f:
                             f.write(f'{self.step_name}{self.separator}'
                                     f'{torch.norm(layer.bias)}\n')
 
