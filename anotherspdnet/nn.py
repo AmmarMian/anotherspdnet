@@ -197,8 +197,7 @@ class ReEigBias(nn.Module):
         # Initialize the bias term
         # init_bias = torch.randn(dim, dtype=self.dtype,
         #                         generator=torch.Generator().manual_seed(seed))
-        init_bias = torch.empty(dim, dtype=self.dtype)
-        self.bias = nn.Parameter(init_bias)
+        self.bias = nn.Parameter(torch.zeros(dim, dtype=self.dtype))
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer with bias
@@ -268,7 +267,7 @@ class ReEig(nn.Module):
         if self.use_autograd:
             operation = lambda X: torch.nn.functional.threshold(
                     X, self.eps, self.eps)
-            _, _, res = eig_operation(X, operation)
+            _, _, res = eig_operation(X, operation, eig_function="eigh")
             return res
         return ReEigFunction.apply(X, self.eps)
 
