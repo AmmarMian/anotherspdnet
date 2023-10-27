@@ -12,3 +12,4 @@ anotherspdnet package.
    nn
    functions
    utils
+   analysis

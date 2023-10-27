@@ -77,6 +77,7 @@ class BiMap(nn.Module):
         self.seed = seed
         self.dtype = dtype
         self.use_autograd = use_autograd
+        self.dim = n_out
 
         if not manifold in ['stiefel', 'sphere']:
             raise ValueError('manifold must be either stiefel or sphere')
@@ -214,8 +215,8 @@ class ReEigBias(nn.Module):
         """
         assert X.shape[-1] == self.dim, (
                 f'Input matrices must have dimension {self.dim}')
-        operation = lambda X: torch.nn.functional.threshold(
-                X+self.bias, self.eps, self.eps)
+        operation = lambda x: torch.min(torch.nn.functional.threshold(
+                x+self.bias, self.eps, self.eps), (1/self.eps)*torch.ones_like(x))
         _, _, res = eig_operation(X, operation)
         return res
 
@@ -233,7 +234,8 @@ class ReEigBias(nn.Module):
 
 class ReEig(nn.Module):
 
-    def __init__(self, eps: float = 1e-4, use_autograd: bool = True) -> None:
+    def __init__(self, eps: float = 1e-4, use_autograd: bool = True,
+                 dim: Optional[int] = None) -> None:
         """ ReEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
@@ -246,10 +248,15 @@ class ReEig(nn.Module):
         use_autograd : bool, optional
             Use torch autograd for the computation of the gradient rather than
             the analytical formula. Default is False.
+
+        dim : int, optional
+            Dimension of the SPD matrices. Default is None.
+            USed for logging purposes.
         """
         super().__init__()
         self.eps = eps
         self.use_autograd = use_autograd
+        self.dim = dim
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -279,7 +286,11 @@ class ReEig(nn.Module):
         str
             Representation of the layer
         """
-        return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd})'
+        if self.dim is None:
+            return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd})'
+        else:
+            return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd}, ' \
+                    f'dim={self.dim})'
 
     def __str__(self) -> str:
         """ String representation of the layer
