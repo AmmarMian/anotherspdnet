@@ -142,7 +142,7 @@ class TestEigOperationGradient(TestCase):
         assert grad_X.shape == X.shape
         assert grad_X.dtype == X.dtype
         # TODO: FIX THIS SHIT
-        # assert_close(grad_X, X.grad)
+        assert_close(grad_X, X.grad)
 
 
 class TestReEig(TestCase):

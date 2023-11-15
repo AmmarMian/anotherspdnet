@@ -112,8 +112,8 @@ class TestBiMap(TestCase):
             self.assertEqual(layer.n_in, self.n_in_decrease)
             self.assertEqual(layer.n_out, self.n_out_decrease)
             self.assertEqual(layer.W.shape, (self.n_batches +
-                                             (self.n_out_decrease,
-                                              self.n_in_decrease)))
+                                             (self.n_in_decrease,
+                                              self.n_out_decrease)))
 
     def test_forward_decrease_many(self) -> None:
         """ Test the forward pass of the BiMap layer with many batches 
@@ -177,13 +177,13 @@ class TestBiMap(TestCase):
             device = torch.device('cuda')
             layer = nn.BiMap(self.n_in_decrease, self.n_out_decrease, 
                          self.n_batches, device=device)
-            self.assertEqual(layer.W.device, device)
+            self.assertEqual(layer.W.device.type, device.type)
 
             X = SymmetricPositiveDefinite().random(
                     self.n_batches + (self.n_matrices, self.n_in_decrease,
                         self.n_in_decrease)).to(device)
             Y = layer(X)
-            self.assertEqual(Y.device, device)
+            self.assertEqual(Y.device.type, device.type)
 
 
 # =============================================================================
@@ -249,7 +249,7 @@ class TestReEig(TestCase):
                         self.n_features)).to(device)
             X.requires_grad = True
             Y = layer(X)
-            assert Y.device == device
+            assert Y.device.type == device.type
 
 
 # =============================================================================

@@ -92,7 +92,9 @@ class BiMap(nn.Module):
             self.manifold = Sphere()
             initialize_weights = initialize_weights_sphere
 
-        # Initialize the weight matrix using geoopt
+        # Initialize the weight matrix using geoopt.
+        # We need to keep a Stiefel matrix in both cases because of the
+        # Riemanian optimization.
         if n_out > n_in:
             if n_batches is None:
                 shape = (n_out, n_in)
@@ -103,9 +105,8 @@ class BiMap(nn.Module):
                 shape = (n_in, n_out)
             else:
                 shape = n_batches + (n_in, n_out)
-        self.W = ManifoldParameter(torch.empty(shape, dtype=dtype), manifold=self.manifold)
-        self.W = initialize_weights(self.W, seed=seed)
-        self.W = self.W.to(device)
+        _W = ManifoldParameter(torch.empty(shape, dtype=dtype, device=device), manifold=self.manifold)
+        self.W = initialize_weights(_W, seed=seed)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """ Forward pass of the BiMap layer
@@ -128,6 +129,7 @@ class BiMap(nn.Module):
 
         if self.use_autograd:
             return biMap(X, _W)
+
         return BiMapFunction.apply(X, _W)
 
     def __repr__(self) -> str:
@@ -234,7 +236,7 @@ class ReEigBias(nn.Module):
 
 class ReEig(nn.Module):
 
-    def __init__(self, eps: float = 1e-4, use_autograd: bool = True,
+    def __init__(self, eps: float = 1e-4, use_autograd: bool = False,
                  dim: Optional[int] = None) -> None:
         """ ReEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
@@ -308,7 +310,7 @@ class ReEig(nn.Module):
 # =============================================================================
 class LogEig(nn.Module):
 
-    def __init__(self, use_autograd: bool = True) -> None:
+    def __init__(self, use_autograd: bool = False) -> None:
         """ LogEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017

@@ -63,17 +63,14 @@ def biMap(X: torch.Tensor, W: torch.Tensor) -> torch.Tensor:
     if X.ndim==2:
         assert W.ndim == 2, \
                 f"W must be a 2-dimensional tensor for X.ndim={X.ndim}"
-        _W = W.transpose(0, 1)
+        return W @ X @ W.transpose(0, 1)
     else:
         assert X.ndim == W.ndim+1, \
                 "X and W must have compatible dimensions: " +\
                 f"X.ndim={X.ndim} and W.ndim={W.ndim}."
-        # Repeat W in the -3 dimension to match the number of matrices in X
-        _W = W.transpose(-1, -2).unsqueeze(-3).repeat(
-                *[1 for _ in range(W.ndim-2)], X.shape[-3], 1, 1)
 
-    return torch.einsum(
-            '...cd,...de,...ef->...cf', torch.transpose(_W, -1, -2), X, _W)
+        return torch.einsum(
+            '...cd,...ide,...ef->...icf', W, X, W.transpose(-1, -2))
 
 
 def biMap_gradient(X: torch.Tensor, W: torch.Tensor,
@@ -105,18 +102,15 @@ def biMap_gradient(X: torch.Tensor, W: torch.Tensor,
         Gradient of the loss with respect to the weight of the layer.
     """
     if X.ndim==2:
-        _W = W.transpose(0, 1)
-        grad_input = _W @ grad_output @ _W.transpose(0, 1)
+        grad_input = W.transpose(0, 1) @ grad_output @ W
         grad_weight = 2*grad_output @ W @ X
 
     else:
-        _W = W.transpose(-1, -2).unsqueeze(-3).repeat(
-                *[1 for _ in range(W.ndim-2)], X.shape[-3], 1, 1)
+        grad_input = torch.einsum('...ab,...ibc,...cd->...iad',
+                                  W.transpose(-1, -2), grad_output, W) 
 
-        grad_input = torch.einsum('...cd,...de,...ef->...cf', _W,
-                               grad_output, _W.transpose(-1, -2))
-        grad_weight = 2*torch.einsum('...bcd,...bde,...bef->...cf',
-                                     grad_output, _W.transpose(-1, -2), X)
+        grad_weight = 2*torch.einsum('...iab,...bc,...icd->...ad',
+                                     grad_output, W, X)
 
     return grad_input, grad_weight
 
