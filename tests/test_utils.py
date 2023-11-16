@@ -16,6 +16,7 @@ seed = 55555
 torch.manual_seed(seed)
 
 
+
 class TestInitilizeWeights(TestCase):
     """Testing strategies for initializing weight matrices"""
 

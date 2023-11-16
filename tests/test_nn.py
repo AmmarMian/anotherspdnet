@@ -12,6 +12,9 @@ from geoopt.manifolds import SymmetricPositiveDefinite, Sphere
 seed = 7777
 torch.manual_seed(seed)
 
+# Change default torch to float64
+torch.set_default_dtype(torch.float64)
+
 
 # =============================================================================
 # BiMap layer

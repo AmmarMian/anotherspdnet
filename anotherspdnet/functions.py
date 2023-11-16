@@ -167,7 +167,7 @@ class BiMapFunction(Function):
 # Operations  on the eigenvalues of a SPD matrix
 # =============================================================================
 def eig_operation(M: torch.Tensor, operation: Callable,
-                  eig_function: str = "eig", **kwargs) -> Tuple[
+                  eig_function: str = "eigh", **kwargs) -> Tuple[
                           torch.Tensor, torch.Tensor,
                           torch.Tensor]:
     """Generic functions to compute an operation on the eigenvalues of a
@@ -215,7 +215,7 @@ def eig_operation(M: torch.Tensor, operation: Callable,
 
 
     eigvals, eigvecs = _eig_function(M)
-    eigvals, eigvecs = torch.real(eigvals), torch.real(eigvecs)
+    eigvals, eigvecs = torch.abs(eigvals), torch.real(eigvecs)
     _eigvals = torch.diag_embed(operation(eigvals, **kwargs))
     result = torch.einsum('...cd,...de,...ef->...cf',
                         eigvecs, _eigvals, eigvecs.transpose(-1, -2))

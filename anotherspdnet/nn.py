@@ -32,7 +32,7 @@ class BiMap(nn.Module):
     def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
                 manifold: str = 'stiefel',
                 seed: Optional[int] = None,
-                dtype: torch.dtype = torch.float32,
+                dtype: torch.dtype = torch.float64,
                 device: torch.device = torch.device('cpu'),
                 use_autograd: bool = True) -> None:
         """ BiMap layer in a SPDnet layer according to the paper:
