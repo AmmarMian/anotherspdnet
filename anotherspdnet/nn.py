@@ -34,7 +34,8 @@ class BiMap(nn.Module):
                 seed: Optional[int] = None,
                 dtype: torch.dtype = torch.float64,
                 device: torch.device = torch.device('cpu'),
-                use_autograd: bool = True) -> None:
+                mm_mode: str = 'einsum',
+                use_autograd: bool = False) -> None:
         """ BiMap layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
@@ -65,9 +66,13 @@ class BiMap(nn.Module):
         device : torch.device, optional
             Device on which the layer is initialized. Default is 'cpu'.
 
+        mm_mode : str, optional
+            Mode for the matrix multiplication. Default is 'einsum'.
+            Choice between 'einsum' and 'bmm'.
+
         use_autograd : bool, optional
             Use torch autograd for the computation of the gradient rather than
-            the analytical formula. Default is True.
+            the analytical formula. Default is False.
         """
         super().__init__()
         self.n_in = n_in
@@ -78,6 +83,10 @@ class BiMap(nn.Module):
         self.dtype = dtype
         self.use_autograd = use_autograd
         self.dim = n_out
+
+        if mm_mode not in ['einsum', 'bmm']:
+            raise ValueError('mm_mode must be either einsum or bmm')
+        self.mm_mode = mm_mode
 
         if not manifold in ['stiefel', 'sphere']:
             raise ValueError('manifold must be either stiefel or sphere')
@@ -128,9 +137,9 @@ class BiMap(nn.Module):
             _W = self.W
 
         if self.use_autograd:
-            return biMap(X, _W)
+            return biMap(X, _W, self.mm_mode)
 
-        return BiMapFunction.apply(X, _W)
+        return BiMapFunction.apply(X, _W, self.mm_mode)
 
     def __repr__(self) -> str:
         """ Representation of the layer
@@ -141,8 +150,9 @@ class BiMap(nn.Module):
             Representation of the layer
         """
         return f'BiMap(n_in={self.n_in}, n_out={self.n_out}, " \
-                    f"shape={self.W.shape}, use_autograd={self.use_autograd})' \
-                    f'seed={self.seed})'
+                f"shape={self.W.shape}, use_autograd={self.use_autograd}, ' \
+                f'seed={self.seed}, dtype={self.dtype}, device={self.device}, '\
+                f'mm_mode={self.mm_mode})'
 
     def __str__(self) -> str:
         """ String representation of the layer
@@ -237,7 +247,8 @@ class ReEigBias(nn.Module):
 class ReEig(nn.Module):
 
     def __init__(self, eps: float = 1e-4, use_autograd: bool = False,
-                 dim: Optional[int] = None) -> None:
+                mm_mode: str = 'einsum', eig_function: str = 'eigh',
+                dim: Optional[int] = None) -> None:
         """ ReEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
@@ -251,14 +262,24 @@ class ReEig(nn.Module):
             Use torch autograd for the computation of the gradient rather than
             the analytical formula. Default is False.
 
+        mm_mode : str, optional
+            Mode for the matrix multiplication. Default is 'einsum'. Choice
+            between 'einsum' and 'bmm'.
+
+        eig_function : str, optional
+            Function used for the computation of the eigendecomposition.
+            Default is 'eigh'. Choice between 'eigh' and 'eig'.
+
         dim : int, optional
             Dimension of the SPD matrices. Default is None.
-            USed for logging purposes.
+            Used for logging purposes.
         """
         super().__init__()
         self.eps = eps
         self.use_autograd = use_autograd
         self.dim = dim
+        self.mm_mode = mm_mode
+        self.eig_function = eig_function
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -276,9 +297,10 @@ class ReEig(nn.Module):
         if self.use_autograd:
             operation = lambda X: torch.nn.functional.threshold(
                     X, self.eps, self.eps)
-            _, _, res = eig_operation(X, operation, eig_function="eigh")
+            _, _, res = eig_operation(X, operation, self.eig_function,
+                                      self.mm_mode)
             return res
-        return ReEigFunction.apply(X, self.eps)
+        return ReEigFunction.apply(X, self.eps, self.mm_mode, self.eig_function)
 
     def __repr__(self) -> str:
         """ Representation of the layer
@@ -288,11 +310,13 @@ class ReEig(nn.Module):
         str
             Representation of the layer
         """
+        base_str = f'ReEig(eps={self.eps}, use_autograd={self.use_autograd}, ' \
+                f'mm_mode={self.mm_mode}, eig_function={self.eig_function}'
         if self.dim is None:
-            return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd})'
+            base_str += ')'
         else:
-            return f'ReEig(eps={self.eps}, use_autograd={self.use_autograd}, ' \
-                    f'dim={self.dim})'
+            base_str += f', dim={self.dim})'
+        return base_str
 
     def __str__(self) -> str:
         """ String representation of the layer
@@ -310,7 +334,8 @@ class ReEig(nn.Module):
 # =============================================================================
 class LogEig(nn.Module):
 
-    def __init__(self, use_autograd: bool = False) -> None:
+    def __init__(self, use_autograd: bool = False,
+                 mm_mode: str = "einsum", eig_function: str= "eigh") -> None:
         """ LogEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
@@ -320,9 +345,19 @@ class LogEig(nn.Module):
         use_autograd : bool, optional
             Use torch autograd for the computation of the gradient rather than
             the analytical formula. Default is False.
+
+        mm_mode : str, optional
+            Mode for the matrix multiplication. Default is 'einsum'. Choice
+            between 'einsum' and 'bmm'.
+
+        eig_function : str, optional
+            Function used for the computation of the eigendecomposition.
+            Default is 'eigh'. Choice between 'eigh' and 'eig'.
         """
         super().__init__()
         self.use_autograd = use_autograd
+        self.mm_mode = mm_mode
+        self.eig_function = eig_function
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -339,9 +374,10 @@ class LogEig(nn.Module):
         """
         if self.use_autograd:
             operation = lambda X: torch.log(X)
-            _, _, res = eig_operation(X, operation)
+            _, _, res = eig_operation(X, operation, self.eig_function,
+                                      self.mm_mode)
             return res
-        return LogEigFunction.apply(X)
+        return LogEigFunction.apply(X, self.mm_mode, self.eig_function)
 
     def __repr__(self) -> str:
         """ Representation of the layer

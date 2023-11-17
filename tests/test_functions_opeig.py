@@ -23,7 +23,7 @@ class TestEigOperation(TestCase):
                 self.batch_size + (self.n_features, self.n_features))
 
     def test_identity_eigh(self):
-        """Test doing no operation with eigh mode"""
+        """Test doing no operation with eigh mode. einsum mode."""
         operation = lambda x: x
         eigvals, eigvects, result = functions.eig_operation(
                 self.X, operation, "eigh")
@@ -36,6 +36,22 @@ class TestEigOperation(TestCase):
                     torch.eye(self.n_features).repeat(
                         self.batch_size + (1, 1)))
         assert result.dtype == self.X.dtype
+
+    def test_identity_eigh_bmm(self):
+        """Test doing no operation with eigh mode. bmm mode."""
+        operation = lambda x: x
+        eigvals, eigvects, result = functions.eig_operation(
+                self.X, operation, "eigh", mm_mode="bmm")
+        assert eigvals.shape == self.batch_size + (self.n_features,)
+        assert eigvects.shape == self.batch_size + (self.n_features,
+                                                    self.n_features)
+        assert result.shape == self.X.shape
+        assert torch.all(torch.real(eigvals) > 0)
+        assert_close(eigvects @ eigvects.transpose(-1, -2),
+                    torch.eye(self.n_features).repeat(
+                        self.batch_size + (1, 1)))
+        assert result.dtype == self.X.dtype
+
 
     def test_identity_eig(self):
         """Test doing no operation with eig mode"""
@@ -98,12 +114,13 @@ class TestEigOperationGradient(TestCase):
                     self.batch_size + (1, 1)) 
 
     def test_gradient_eigs(self):
-        """Testing the gradient towards eigenvalues and eigenvectors"""
+        """Testing the gradient towards eigenvalues and eigenvectors.
+        Mode einsum."""
         # Doing forward manually to have autograd
         X = SymmetricPositiveDefinite().random(
                 self.batch_size + (self.n_features, self.n_features))
         eigvals, eigvects = torch.linalg.eig(X)
-        eigvals, eigvects = torch.real(eigvals), torch.real(eigvects)
+        eigvals, eigvects = torch.abs(eigvals), torch.real(eigvects)
         eigvals.requires_grad = True
         eigvects.requires_grad = True
         Y = torch.einsum('...ij,...jk,...kl->...il',
@@ -127,8 +144,35 @@ class TestEigOperationGradient(TestCase):
         assert_close(grad_eigvects, eigvects.grad)
 
 
+    def test_gradient_eigs_bmm(self):
+        """Testing the gradient towards eigenvalues and eigenvectors.
+        Mode bmm."""
+        # Doing forward manually to have autograd
+        X = SymmetricPositiveDefinite().random(
+            self.batch_size + (self.n_features, self.n_features))
+        eigvals, eigvects = torch.linalg.eig(X)
+        eigvals, eigvects = torch.abs(eigvals), torch.real(eigvects)
+        eigvals.requires_grad = True
+        eigvects.requires_grad = True
+        Y = eigvects @ torch.diag_embed(self.operation(eigvals)) @\
+                eigvects.transpose(-1, -2)
+        loss = self.loss_function(Y)
+        loss.backward()
+        grad_eigvals, grad_eigvects = functions.eig_operation_gradient_eigs(
+            self.grad_output, eigvals, eigvects,
+            self.operation, self.grad_operation, mm_mode="bmm")
+        assert grad_eigvals.shape == self.batch_size + (self.n_features,
+                                                    self.n_features)
+        assert grad_eigvects.shape == self.batch_size + (self.n_features,
+                                                    self.n_features)
+        assert grad_eigvals.dtype == X.dtype
+        grad_eigvals = torch.diagonal(grad_eigvals, dim1=-2, dim2=-1)
+        assert_close(grad_eigvals, eigvals.grad)
+        assert_close(grad_eigvects, eigvects.grad)
+
+
     def test_grad_input(self):
-        """Testing the gradient towards input"""
+        """Testing the gradient towards input. Mode einsum."""
         X = SymmetricPositiveDefinite().random(
                 self.batch_size + (self.n_features, self.n_features))
         X.requires_grad = True
@@ -141,7 +185,23 @@ class TestEigOperationGradient(TestCase):
             self.operation, self.grad_operation)
         assert grad_X.shape == X.shape
         assert grad_X.dtype == X.dtype
-        # TODO: FIX THIS SHIT
+        assert_close(grad_X, X.grad)
+
+
+    def test_grad_input_bmm(self):
+        """Testing the gradient towards input. Mode bmm."""
+        X = SymmetricPositiveDefinite().random(
+                self.batch_size + (self.n_features, self.n_features))
+        X.requires_grad = True
+        eigvals, eigvects, Y = functions.eig_operation(
+                X, self.operation)
+        loss = self.loss_function(Y)
+        loss.backward()
+        grad_X = functions.eig_operation_gradient(
+            self.grad_output, eigvals, eigvects,
+            self.operation, self.grad_operation, mm_mode="bmm")
+        assert grad_X.shape == X.shape
+        assert grad_X.dtype == X.dtype
         assert_close(grad_X, X.grad)
 
 

@@ -1,6 +1,6 @@
 # Some utility functions for the project
 
-from typing import Optional
+from typing import Optional, Tuple
 
 import math
 import torch
@@ -125,3 +125,41 @@ def zero_offdiag(X: torch.Tensor) -> torch.Tensor:
         off-diagonal
     """
     return torch.diag_embed(torch.diagonal(X, dim1=-2, dim2=-1))
+
+
+def nd_tensor_to_3d(input: torch.Tensor) -> torch.Tensor:
+    """Converts an n-dimensional tensor to a 3D tensor by fusing the first
+    dimensions.
+
+    Parameters
+    ----------
+    input : torch.Tensor
+        tensor of shape (..., n, m)
+
+    Returns
+    -------
+    output : torch.Tensor
+        tensor of shape (d, n, m), where d is the product of the first
+        dimensions of input
+    """
+    return input.reshape((-1,) + input.shape[-2:])
+
+
+def threed_tensor_to_nd(input: torch.Tensor, shape: Tuple) -> torch.Tensor:
+    """Converts a 3D tensor to an n-dimensional tensor by splitting the first
+    dimension.
+
+    Parameters
+    ----------
+    input : torch.Tensor
+        tensor of shape (d, n, m)
+
+    shape : torch.Size
+        shape of the output tensor
+
+    Returns
+    -------
+    output : torch.Tensor
+        tensor of shape (..., n, m)
+    """
+    return input.reshape(shape)
