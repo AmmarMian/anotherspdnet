@@ -162,7 +162,9 @@ def biMap_gradient(X: torch.Tensor, W: torch.Tensor,
                                 torch.bmm(grad_output, _W))
             grad_input = threed_tensor_to_nd(grad_input, X.shape)
             grad_weight = 2*torch.bmm(grad_output, torch.bmm(_W, _X))
-            grad_weight = threed_tensor_to_nd(grad_weight, W.shape)
+            grad_weight = torch.sum(
+                    threed_tensor_to_nd(grad_weight, _W.shape),
+                    dim=-3)
 
     return grad_input, grad_weight
 
