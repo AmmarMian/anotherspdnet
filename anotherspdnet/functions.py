@@ -361,10 +361,36 @@ def eig_operation_gradient_eigs(grad_output: torch.Tensor, eigvals: torch.Tensor
     return zero_offdiag(grad_eigvals), grad_eigvectors
 
 
+def construct_L_matrix(eigvals: torch.Tensor, eigvals_: torch.Tensor,
+                       deriveigvals: torch.Tensor) -> torch.Tensor:
+    """Constructs the matrix L of brooks.
+
+    Parameters
+    ----------
+    eigvals : torch.Tensor of shape (..., n_features)
+        eigenvalues of the SPD matrices
+    eigvals_ : torch.Tensor of shape (..., n_features)
+        f(eigenvalues) of the SPD matrices
+    deriveigvals : torch.Tensor of shape (..., n_features)
+        f'(eigenvalues) of the SPD matrices
+
+    Returns
+    -------
+    L_matrix : torch.Tensor of shape (..., n_features, n_features)
+        matrix L of brooks 
+    """
+    L_matrix = (eigvals_.unsqueeze(-1) - eigvals_.unsqueeze(-2))/\
+            (eigvals.unsqueeze(-1) - eigvals.unsqueeze(-2))
+    L_matrix[torch.isinf(L_matrix)] = 0.
+    L_matrix[torch.isnan(L_matrix)] = 0.
+    L_matrix = L_matrix + zero_offdiag(deriveigvals)
+    return L_matrix
+
 
 def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
                            eigvecs: torch.Tensor, operation: Callable,
-                        grad_operation: Callable, mm_mode: str = "einsum",
+                           grad_operation: Callable, mm_mode: str = "einsum",
+                           formula: str = "brooks",
                            **kwargs) -> torch.Tensor:
     """Generic function to compute the gradient of an operation on the
     eigenvalues of a SPD matrix.
@@ -394,6 +420,10 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
         Mode for the computation of the matrix multiplication. Choices are:
             "einsum" or "bmm". Default is "einsum".
 
+    formula : str
+        Formula to compute the gradient of the operation. Choices are:
+            "brooks" or "ionescu". Default is "brooks
+
     **kwargs:
         keyword arguments to pass to the operation and gradient functions.
 
@@ -402,35 +432,45 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
     grad_input : torch.Tensor
         gradient of the loss with respect to the input of the layer.
     """
-    eigdiff_matrix = construct_eigdiff_matrix(eigvals)
-    eigvecs_transpose = eigvecs.transpose(-1, -2)
-    grad_eigvals, grad_eigvectors = eig_operation_gradient_eigs(
-            grad_output, eigvals, eigvecs, operation, grad_operation, 
-            mm_mode, **kwargs)
+    # Parsing the formula argument
+    assert formula in ["brooks", "ionescu"], \
+            f"formula must be in ['brooks', 'ionescu'], got {formula}"
 
-    # Computing final gradient towards X
-    if mm_mode == "einsum":
-        grad_input = 2*torch.einsum('...ab,...bc,...cd->...ad',
-                    eigvecs,
-                    eigdiff_matrix.transpose(-1, -2) * symmetrize(
-                        torch.einsum('...ab,...bc->...ac', eigvecs_transpose,
-                                     grad_eigvectors)),
-                    eigvecs_transpose) +\
-                torch.einsum('...ab,...bc,...cd->...ad', eigvecs,
-                    zero_offdiag(grad_eigvals), eigvecs_transpose)
+    if formula == "brooks":
+        eigvals_nodiag_ = operation(eigvals, **kwargs)
+        deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
+        L_matrix = construct_L_matrix(eigvals, eigvals_nodiag_, deriveigvals) # matrix L (13) brooks
+        eigvecs_transpose = eigvecs.transpose(-1, -2)
+        if mm_mode == "einsum":
+            middle_term = L_matrix*torch.einsum('...ij,...jk,...kl->...il',
+                                                eigvecs_transpose,
+                                                grad_output, eigvecs)
+            grad_input = torch.einsum('...ij,...jk,...kl->...il', eigvecs,
+                                    middle_term, eigvecs_transpose)
+        else:
+            middle_term=L_matrix*(eigvecs_transpose@grad_output@eigvecs)
+            grad_input = eigvecs@middle_term@eigvecs_transpose
+
 
     else:
-        # grad_input = 2*torch.bmm(
-        #         eigvecs, torch.bmm(
-        #             eigdiff_matrix.transpose(-1, -2) * symmetrize(
-        #                 torch.bmm(eigvecs_transpose, grad_eigvectors)),
-        #         eigvecs_transpose)) +\
-        #         torch.bmm(eigvecs, torch.bmm(
-        #             zero_offdiag(grad_eigvals), eigvecs_transpose))
-        grad_input = 2*(eigvecs @ (eigdiff_matrix.transpose(-1, -2) *\
-                        symmetrize(eigvecs_transpose @ grad_eigvectors)) @
-                        eigvecs_transpose) +\
-                     eigvecs @ (zero_offdiag(grad_eigvals)) @ eigvecs_transpose
+        eigdiff_matrix = construct_eigdiff_matrix(eigvals)
+        eigvecs_transpose = eigvecs.transpose(-1, -2)
+        grad_eigvals, grad_eigvectors = eig_operation_gradient_eigs(
+                grad_output, eigvals, eigvecs, operation, grad_operation, 
+                mm_mode, **kwargs)
+
+        # Computing final gradient towards X
+        if mm_mode == "einsum":
+            middle_term = -2*eigdiff_matrix*torch.einsum('...ij,...jk->...ik',
+                                eigvecs_transpose, grad_eigvectors) +\
+                                    zero_offdiag(grad_eigvals)
+            grad_input = torch.einsum('...ij,...jk,...kl->...il', eigvecs,
+                            middle_term, eigvecs_transpose)
+
+        else:
+            middle_term = -2*eigdiff_matrix * (eigvecs_transpose @ grad_eigvectors) +\
+                zero_offdiag(grad_eigvals)
+            grad_input = eigvecs @ middle_term @ eigvecs_transpose
 
 
     return grad_input
@@ -486,7 +526,8 @@ class ReEigFunction(Function):
     @staticmethod
     def forward(ctx, M: torch.Tensor, eps: float,
                 mm_mode: str = "einsum",
-                eig_function: str = "eigh") -> torch.Tensor:
+                eig_function: str = "eigh",
+                formula: str = "brooks") -> torch.Tensor:
         """Forward pass of the ReEig function.
 
         Parameters
@@ -508,6 +549,10 @@ class ReEigFunction(Function):
             Name of the function to compute the eigenvalues and eigenvectors.
             Choices are: "eigh" or "eig".
 
+        formula : str
+            Formula to compute the gradient of the operation. Choices are:
+                "brooks" or "ionescu". Default is "brooks"
+
         Returns
         -------
         M_rect : torch.Tensor of shape (..., n_features, n_features)
@@ -515,15 +560,16 @@ class ReEigFunction(Function):
         """
         operation = lambda x: re_operation(x, eps)
         eigvals, eigvecs, M_rect = eig_operation(M, operation, eig_function,
-                                                 mm_mode)
+                                                mm_mode)
         ctx.save_for_backward(eigvals, eigvecs)
         ctx.eps = eps
         ctx.mm_mode = mm_mode
+        ctx.formula = formula
         return M_rect
 
     @staticmethod
     def backward(ctx, grad_output: torch.Tensor) ->\
-            Tuple[torch.Tensor, None, None, None]:
+            Tuple[torch.Tensor, None, None, None, None]:
         """Backward pass of the ReEig function.
 
         Parameters
@@ -541,13 +587,14 @@ class ReEigFunction(Function):
         """
         eps = ctx.eps
         mm_mode = ctx.mm_mode
+        formula = ctx.formula
         operation = lambda x: re_operation(x, eps)
         operation_gradient = lambda x: re_operation_gradient(x, eps,
                                                              grad_output.dtype)
         eigvals, eigvecs = ctx.saved_tensors
         return eig_operation_gradient(grad_output, eigvals, eigvecs,
-                                operation, operation_gradient, mm_mode),\
-                None, None, None
+                                operation, operation_gradient, mm_mode, formula),\
+                None, None, None, None
 
 
 # LogEig
@@ -558,7 +605,8 @@ class LogEigFunction(Function):
     @staticmethod
     def forward(ctx, M: torch.Tensor,
                 mm_mode: str = "einsum",
-                eig_function: str = "eigh") -> torch.Tensor:
+                eig_function: str = "eigh",
+                formula: str = "brooks") -> torch.Tensor:
         """Forward pass of the logEig function.
 
         Parameters
@@ -577,6 +625,10 @@ class LogEigFunction(Function):
             Name of the function to compute the eigenvalues and eigenvectors.
             Choices are: "eigh" or "eig".
 
+        formula : str
+            Formula to compute the gradient of the operation. Choices are:
+                "brooks" or "ionescu". Default is "brooks"
+
         Returns
         -------
         M_rect : torch.Tensor of shape (..., n_features, n_features)
@@ -585,12 +637,14 @@ class LogEigFunction(Function):
         eigvals, eigvecs, M_rect = eig_operation(M, torch.log, eig_function,
                                                  mm_mode)
         ctx.mm_mode = mm_mode
+        ctx.formula = formula
+
         ctx.save_for_backward(eigvals, eigvecs)
         return M_rect
 
     @staticmethod
     def backward(ctx, grad_output: torch.Tensor) ->\
-            Tuple[torch.Tensor, None, None]:
+            Tuple[torch.Tensor, None, None, None]:
         """Backward pass of the logEig function.
 
         Parameters
@@ -607,11 +661,12 @@ class LogEigFunction(Function):
             Gradient of the loss with respect to the input of the layer.
         """
         mm_mode = ctx.mm_mode
+        formula = ctx.formula
         operation_gradient = lambda x: 1/x
         eigvals, eigvecs = ctx.saved_tensors
         return eig_operation_gradient(grad_output, eigvals, eigvecs,
-                                torch.log, operation_gradient, mm_mode),\
-                None, None
+                                torch.log, operation_gradient, mm_mode, formula),\
+                None, None, None
 
 
 # =============================================================================

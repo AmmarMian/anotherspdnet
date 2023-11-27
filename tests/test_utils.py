@@ -12,7 +12,7 @@ import os
 from geoopt.manifolds import Stiefel, SymmetricPositiveDefinite, Sphere
 from geoopt import ManifoldParameter
 
-seed = 55555
+seed = 5555
 torch.manual_seed(seed)
 
 

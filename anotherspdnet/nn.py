@@ -34,7 +34,7 @@ class BiMap(nn.Module):
                 seed: Optional[int] = None,
                 dtype: torch.dtype = torch.float64,
                 device: torch.device = torch.device('cpu'),
-                mm_mode: str = 'einsum',
+                 mm_mode: str = 'einsum',
                 use_autograd: bool = False) -> None:
         """ BiMap layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
@@ -248,6 +248,7 @@ class ReEig(nn.Module):
 
     def __init__(self, eps: float = 1e-4, use_autograd: bool = False,
                 mm_mode: str = 'einsum', eig_function: str = 'eigh',
+                formula: str = "brooks",
                 dim: Optional[int] = None) -> None:
         """ ReEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
@@ -270,6 +271,10 @@ class ReEig(nn.Module):
             Function used for the computation of the eigendecomposition.
             Default is 'eigh'. Choice between 'eigh' and 'eig'.
 
+        formula : str, optional
+            Formula used for the computation of the gradient. Default is
+                'brooks'. Choice between 'brooks' and 'ionescu".
+
         dim : int, optional
             Dimension of the SPD matrices. Default is None.
             Used for logging purposes.
@@ -280,6 +285,7 @@ class ReEig(nn.Module):
         self.dim = dim
         self.mm_mode = mm_mode
         self.eig_function = eig_function
+        self.formula = formula
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -300,7 +306,8 @@ class ReEig(nn.Module):
             _, _, res = eig_operation(X, operation, self.eig_function,
                                       self.mm_mode)
             return res
-        return ReEigFunction.apply(X, self.eps, self.mm_mode, self.eig_function)
+        return ReEigFunction.apply(X, self.eps, self.mm_mode,
+                                   self.eig_function, self.formula)
 
     def __repr__(self) -> str:
         """ Representation of the layer
@@ -311,7 +318,8 @@ class ReEig(nn.Module):
             Representation of the layer
         """
         base_str = f'ReEig(eps={self.eps}, use_autograd={self.use_autograd}, ' \
-                f'mm_mode={self.mm_mode}, eig_function={self.eig_function}'
+                f'mm_mode={self.mm_mode}, eig_function={self.eig_function}, ' \
+                f'formula={self.formula}'
         if self.dim is None:
             base_str += ')'
         else:
@@ -335,7 +343,8 @@ class ReEig(nn.Module):
 class LogEig(nn.Module):
 
     def __init__(self, use_autograd: bool = False,
-                 mm_mode: str = "einsum", eig_function: str= "eigh") -> None:
+                 mm_mode: str = "einsum", eig_function: str= "eigh",
+                 formula: str = "brooks") -> None:
         """ LogEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
@@ -353,11 +362,16 @@ class LogEig(nn.Module):
         eig_function : str, optional
             Function used for the computation of the eigendecomposition.
             Default is 'eigh'. Choice between 'eigh' and 'eig'.
+
+        formula : str, optional
+            Formula used for the computation of the gradient. Default is
+            'brooks'. Choice between 'brooks' and 'ionescu".
         """
         super().__init__()
         self.use_autograd = use_autograd
         self.mm_mode = mm_mode
         self.eig_function = eig_function
+        self.formula = formula
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer
@@ -377,7 +391,8 @@ class LogEig(nn.Module):
             _, _, res = eig_operation(X, operation, self.eig_function,
                                       self.mm_mode)
             return res
-        return LogEigFunction.apply(X, self.mm_mode, self.eig_function)
+        return LogEigFunction.apply(X, self.mm_mode, self.eig_function,
+                                    self.formula)
 
     def __repr__(self) -> str:
         """ Representation of the layer
@@ -387,7 +402,8 @@ class LogEig(nn.Module):
         str
             Representation of the layer
         """
-        return f'LogEig(auto_grad={self.use_autograd})'
+        return f'LogEig(auto_grad={self.use_autograd}, mm_mode={self.mm_mode}, ' \
+                f'eig_function={self.eig_function}, formula={self.formula})'
 
     def __str__(self) -> str:
         """ String representation of the layer
