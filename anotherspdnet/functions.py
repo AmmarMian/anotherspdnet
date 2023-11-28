@@ -669,6 +669,269 @@ class LogEigFunction(Function):
                 None, None, None
 
 
+# ExpEig
+# -----------------------------
+class ExpEigFunction(Function):
+    """ExpEig function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor,
+                mm_mode: str = "einsum",
+                eig_function: str = "eigh") -> torch.Tensor:
+        """Forward pass of the ExpEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to save tensors for the backward pass.
+
+        M : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices.
+
+        mm_mode : str
+            Mode for the computation of the matrix multiplication. Choices are:
+                "einsum" or "bmm". Default is "einsum".
+
+        eig_function: str
+            Name of the function to compute the eigenvalues and eigenvectors.
+            Choices are: "eigh" or "eig".
+
+        Returns
+        -------
+        M_exp : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices with exponentiated eigenvalues.
+        """
+        eigvals, eigvecs, M_exp = eig_operation(M, torch.exp, eig_function,
+                                                mm_mode)
+        ctx.mm_mode = mm_mode
+
+        ctx.save_for_backward(eigvals, eigvecs)
+        return M_exp
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) ->\
+            Tuple[torch.Tensor, None, None]:
+        """Backward pass of the ExpEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to retrieve tensors saved during the forward pass.
+
+        grad_output : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the output of the layer.
+
+        Returns
+        -------
+        grad_input : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the input of the layer.
+        """
+        mm_mode = ctx.mm_mode
+        operation_gradient = torch.exp
+        eigvals, eigvecs = ctx.saved_tensors
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                      torch.exp, operation_gradient, mm_mode),\
+               None, None
+
+# SqrtmEig
+# -----------------------------
+class SqrtmEigFunction(Function):
+    """SqrtmEig function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor,
+                mm_mode: str = "einsum",
+                eig_function: str = "eigh") -> torch.Tensor:
+        """Forward pass of the SqrtmEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to save tensors for the backward pass.
+
+        M : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices.
+
+        mm_mode : str
+            Mode for the computation of the matrix multiplication. Choices are:
+                "einsum" or "bmm". Default is "einsum".
+
+        eig_function: str
+            Name of the function to compute the eigenvalues and eigenvectors.
+            Choices are: "eigh" or "eig".
+
+        Returns
+        -------
+        M_sqrtm : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices with square root of eigenvalues.
+        """
+        eigvals, eigvecs, M_sqrtm = eig_operation(M, torch.sqrt, eig_function,
+                                                  mm_mode)
+        ctx.mm_mode = mm_mode
+
+        ctx.save_for_backward(eigvals, eigvecs)
+        return M_sqrtm
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) ->\
+            Tuple[torch.Tensor, None, None]:
+        """Backward pass of the SqrtmEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to retrieve tensors saved during the forward pass.
+
+        grad_output : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the output of the layer.
+
+        Returns
+        -------
+        grad_input : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the input of the layer.
+        """
+        mm_mode = ctx.mm_mode
+        operation_gradient = lambda x: 0.5 / torch.sqrt(x)
+        eigvals, eigvecs = ctx.saved_tensors
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                      torch.sqrt, operation_gradient, mm_mode),\
+               None, None
+
+
+# InvSqrtmEig
+# -----------------------------
+class InvSqrtmEigFunction(Function):
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor,
+                mm_mode: str = "einsum",
+                eig_function: str = "eigh") -> torch.Tensor:
+        """Forward pass of the InvSqrtmEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to save tensors for the backward pass.
+
+        M : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices.
+
+        mm_mode : str
+            Mode for the computation of the matrix multiplication. Choices are:
+                "einsum" or "bmm". Default is "einsum".
+
+        eig_function: str
+            Name of the function to compute the eigenvalues and eigenvectors.
+            Choices are: "eigh" or "eig".
+
+        Returns
+        -------
+        M_inv_sqrtm : torch.Tensor of shape (..., n_features, n_features)
+            Batch of SPD matrices with inverse square root of eigenvalues.
+        """
+        eigvals, eigvecs, M_inv_sqrtm = eig_operation(M,
+                                          lambda x: 1 / torch.sqrt(x),
+                                          eig_function, mm_mode)
+        ctx.mm_mode = mm_mode
+
+        ctx.save_for_backward(eigvals, eigvecs)
+        return M_inv_sqrtm
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) ->\
+            Tuple[torch.Tensor, None, None]:
+        """Backward pass of the InvSqrtmEig function.
+
+        Parameters
+        ----------
+        ctx : torch.autograd.function._ContextMethodMixin
+            Context object to retrieve tensors saved during the forward pass.
+
+        grad_output : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the output of the layer.
+
+        Returns
+        -------
+        grad_input : torch.Tensor of shape (..., n_features, n_features)
+            Gradient of the loss with respect to the input of the layer.
+        """
+        mm_mode = ctx.mm_mode
+        operation_gradient = lambda x: -0.5 / (x**1.5)
+        eigvals, eigvecs = ctx.saved_tensors
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                      lambda x: 1 / torch.sqrt(x),
+                                      operation_gradient, mm_mode),\
+               None, None
+
+
+class SqrtmAndInvSqrtmEigFunction(Function):
+    """Function that computes the square root and inverse square root of the
+    eigenvalues of a SPD matrix."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor,
+                mm_mode: str = "einsum",
+                eig_function: str = "eigh") ->\
+                        Tuple[torch.Tensor, torch.Tensor]:
+        eigvals, eigvecs, M_sqrtm = eig_operation(M, torch.sqrt, eig_function,
+                                                mm_mode)
+        _eigvals = torch.diag_embed(1 / torch.sqrt(eigvals))
+
+        if mm_mode == "einsum":
+            M_inv_sqrtm = torch.einsum('...cd,...de,...ef->...cf',
+                            eigvecs, _eigvals, eigvecs.transpose(-1, -2))
+        else:
+            M_inv_sqrtm = eigvecs @ _eigvals @ eigvecs.transpose(-1, -2)
+
+        ctx.mm_mode = mm_mode
+        ctx.save_for_backward(eigvals, eigvecs)
+        return M_sqrtm, M_inv_sqrtm
+
+    @staticmethod
+    def backward(ctx, grad_output_sqrtm: torch.Tensor,
+                grad_output_inv_sqrtm: torch.Tensor) ->\
+                        Tuple[torch.Tensor, None, None]:
+        mm_mode = ctx.mm_mode
+        eigvals, eigvecs = ctx.saved_tensors
+
+        operation_gradient_sqrtm = lambda x: 0.5 / torch.sqrt(x)
+        operation_gradient_inv_sqrtm = lambda x: -0.5 / (x**1.5)
+
+        grad_input_sqrtm = eig_operation_gradient(grad_output_sqrtm, eigvals,
+                                    eigvecs, torch.sqrt,
+                                    operation_gradient_sqrtm, mm_mode)
+        grad_input_inv_sqrtm = eig_operation_gradient(grad_output_inv_sqrtm,
+                                    eigvals, eigvecs,
+                                    operation_gradient_inv_sqrtm, mm_mode)
+        # TODO: NOT SURE ABOUT THIS
+        return grad_input_sqrtm + grad_input_inv_sqrtm, None, None
+
+
+# PowerEig
+# -----------------------------
+class PowerEigFunction(Function):
+    """PowerEig function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor, p: float) -> torch.Tensor:
+        power = lambda x: x**p
+        eigvals, eigvecs, M_power = eig_operation(M, power)
+        ctx.save_for_backward(eigvals, eigvecs)
+        ctx.p = p
+
+        return M_power
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) ->\
+            Tuple[torch.Tensor, None]:
+        p = ctx.p
+        eigvals, eigvecs = ctx.saved_tensors
+        operation_gradient = lambda x: p * x**(p-1)
+        return eig_operation_gradient(grad_output, eigvals, eigvecs,
+                                  lambda x: x**p,
+                                  operation_gradient), None
+
+
 # =============================================================================
 # Vectorisation stuff
 # =============================================================================
@@ -741,4 +1004,43 @@ def unvech_batch(X_vech: torch.Tensor) -> torch.Tensor:
     X = symmetrize(X)
     return X
 
+# Riemannian operations
+# -----------------------------
+def spd_affine_invariant_geodesic(X: torch.Tensor, Y: torch.Tensor,
+                                  t: float) -> torch.Tensor:
+    """Affine invariant geodesic between two SPD matrices.
+
+    Parameters
+    ----------
+    X : torch.Tensor of shape (..., n, n)
+        Batch of SPD matrices.
+
+    Y : torch.Tensor of shape (..., n, n)
+        Batch of SPD matrices.
+
+    t : float
+        Parameter of the geodesic. between 0 and 1.
+
+    Returns
+    -------
+    Z : torch.Tensor of shape (..., n, n)
+        Batch of SPD matrices.
+    """
+
+    # TODO: Make that we compute the less time possible eig decomposition
+
+    assert t >= 0 and t <= 1, "t must be between 0 and 1"
+
+    sqrtm_X = SqrtmEigFunction.apply(X)
+    sqrtm_X_inv = InvSqrtmEigFunction.apply(X)
+
+
+    return torch.einsum(
+            '...ij,...jk,...kl->...il',
+            sqrtm_X,
+            PowerEigFunction.apply(
+                torch.einsum('...ij,...jk,...kl->...il',
+                            sqrtm_X_inv, Y, sqrtm_X_inv),
+                t)
+            , sqrtm_X)
 
