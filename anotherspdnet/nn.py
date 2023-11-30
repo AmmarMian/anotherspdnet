@@ -19,7 +19,7 @@ from geoopt.tensor import ManifoldParameter
 from .functions import (
         BiMapFunction, ReEigFunction, LogEigFunction, 
         vec_batch, unvec_batch, vech_batch, unvech_batch,
-        eig_operation, biMap
+        eig_operation, biMap, ReEigBiasFunction
 )
 from .utils import initialize_weights_sphere, initialize_weights_stiefel
 
@@ -171,8 +171,9 @@ class BiMap(nn.Module):
 class ReEigBias(nn.Module):
 
     def __init__(self, dim: int, eps: float = 1e-4, 
-                 use_autograd: bool = True,
+                 use_autograd: bool = False,
                  dtype: torch.dtype = torch.float64,
+                 device: torch.device = torch.device('cpu'),
                  seed: Optional[int] = None) -> None:
         """ ReEig layer with a bias term.
 
@@ -192,13 +193,12 @@ class ReEigBias(nn.Module):
         dtype : torch.dtype, optional
             Data type of the layer. Default is torch.float64.
 
+        device : torch.device, optional
+            Device on which the layer is initialized. Default is 'cpu'.
+
         seed : int, optional
             Seed for the initialization of the bias term. Default is None.
         """
-
-        if not use_autograd:
-            raise NotImplementedError(
-                    'Without autograd, the layer is not implemented (yet).')
 
         super().__init__()
         self.eps = eps
@@ -210,7 +210,8 @@ class ReEigBias(nn.Module):
         # Initialize the bias term
         # init_bias = torch.randn(dim, dtype=self.dtype,
         #                         generator=torch.Generator().manual_seed(seed))
-        self.bias = nn.Parameter(torch.zeros(dim, dtype=self.dtype))
+        self.bias = nn.Parameter(torch.zeros(dim, dtype=self.dtype,
+                                             device=device))
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer with bias
@@ -227,9 +228,15 @@ class ReEigBias(nn.Module):
         """
         assert X.shape[-1] == self.dim, (
                 f'Input matrices must have dimension {self.dim}')
-        operation = lambda x: torch.min(torch.nn.functional.threshold(
+
+        if self.use_autograd:
+            operation = lambda x: torch.min(torch.nn.functional.threshold(
                 x+self.bias, self.eps, self.eps), (1/self.eps)*torch.ones_like(x))
-        _, _, res = eig_operation(X, operation)
+            _, _, res = eig_operation(X, operation)
+
+        else:
+            res = ReEigBiasFunction.apply(X, self.bias, self.eps)
+
         return res
 
 

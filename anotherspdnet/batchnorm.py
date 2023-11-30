@@ -77,7 +77,7 @@ def riemannian_mean_spd(X: torch.Tensor, initial_stepsize: float = 1.0,
             J = torch.einsum('...,...ij->ij', weights,
                             LogEigFunction.apply(
                                 torch.einsum('ij,...jk,kl->...il',
-                                            C12_inv, X, C12_inv)))/num_samples
+                                            C12_inv, X, C12_inv)))
             mean = torch.einsum('ij,...jk,kl->...il', C12, 
                         ExpEigFunction.apply(nu*J), C12)
 
