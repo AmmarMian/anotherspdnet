@@ -369,8 +369,10 @@ def construct_L_matrix(eigvals: torch.Tensor, eigvals_: torch.Tensor,
     ----------
     eigvals : torch.Tensor of shape (..., n_features)
         eigenvalues of the SPD matrices
+
     eigvals_ : torch.Tensor of shape (..., n_features)
         f(eigenvalues) of the SPD matrices
+
     deriveigvals : torch.Tensor of shape (..., n_features)
         f'(eigenvalues) of the SPD matrices
 
@@ -385,6 +387,73 @@ def construct_L_matrix(eigvals: torch.Tensor, eigvals_: torch.Tensor,
     L_matrix[torch.isnan(L_matrix)] = 0.
     L_matrix = L_matrix + zero_offdiag(deriveigvals)
     return L_matrix
+
+
+def eig_operation_gradient_inputandbias(grad_output: torch.Tensor,
+                                        eigvals: torch.Tensor,
+                                        eigvecs: torch.Tensor,
+                                        bias: torch.Tensor,
+                                        operation: Callable,
+                                        grad_operation: Callable,
+                                        **kwargs) ->\
+                                                Tuple[torch.Tensor, torch.Tensor]:
+    """Gradient of an operation on the eigenvalues of a SPD matrix towards the
+    input and the bias for ReEigBias module.
+
+    Parameters
+    ----------
+    grad_output : torch.Tensor
+        gradient of the loss function wrt the output of the operation.
+        of shape (..., n_features, n_features)
+
+    eigvals : torch.Tensor
+        eigenvalues of shape (..., n_features)
+
+    eigvecs : torch.Tensor
+        eigenvectors of shape (..., n_features, n_features)
+
+    bias : torch.Tensor
+        bias of shape (..., n_features)
+
+    operation: Callable
+        function to apply to the eigenvalues. Any unknown keyword args passed
+        to this function are passed to the operation function.
+
+    grad_operation: Callable
+        function to apply to the gradient of the operation.
+        Any unknown keyword args passed to this function are passed to the
+        operation function.
+
+    **kwargs:
+        keyword arguments to pass to the operation and gradient functions.
+
+    Returns
+    --------
+    grad_input : torch.Tensor
+        gradient of the loss with respect to the input of the layer.
+
+    grad_bias : torch.Tensor
+        gradient of the loss with respect to the bias of the layer.
+    """
+    eigvals_nodiag_ = operation(eigvals+bias, **kwargs)
+    deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
+    derivbias = torch.diag_embed(grad_operation(bias, **kwargs))
+
+    # matrix L (13) brooks
+    L_matrix = construct_L_matrix(eigvals, eigvals_nodiag_, deriveigvals) 
+    eigvecs_transpose = eigvecs.transpose(-1, -2)
+    middle_term = L_matrix*torch.einsum('...ij,...jk,...kl->...il',
+                                        eigvecs_transpose,
+                                        grad_output, eigvecs)
+    grad_input = torch.einsum('...ij,...jk,...kl->...il', eigvecs,
+                            middle_term, eigvecs_transpose)
+    grad_bias = torch.einsum('...ij,...jk,...kl,...lm->...im', derivbias,
+                        eigvecs_transpose, grad_output, eigvecs)
+
+    # Keep only the diagonal
+    grad_bias = torch.diagonal(grad_bias, dim1=-2, dim2=-1)
+    return grad_input, grad_bias
+
 
 
 def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
@@ -439,7 +508,8 @@ def eig_operation_gradient(grad_output: torch.Tensor, eigvals: torch.Tensor,
     if formula == "brooks":
         eigvals_nodiag_ = operation(eigvals, **kwargs)
         deriveigvals = torch.diag_embed(grad_operation(eigvals, **kwargs))
-        L_matrix = construct_L_matrix(eigvals, eigvals_nodiag_, deriveigvals) # matrix L (13) brooks
+        # matrix L (13) brooks
+        L_matrix = construct_L_matrix(eigvals, eigvals_nodiag_, deriveigvals) 
         eigvecs_transpose = eigvecs.transpose(-1, -2)
         if mm_mode == "einsum":
             middle_term = L_matrix*torch.einsum('...ij,...jk,...kl->...il',
@@ -518,6 +588,42 @@ def re_operation_gradient(eigvals: torch.Tensor, eps: float,
         eigenvalues of the SPD matrices with rectified eigenvalues.
     """
     return (eigvals > eps).type(dtype)
+
+
+class ReEigBiasFunction(Function):
+    """ReEigBias function."""
+
+    @staticmethod
+    def forward(ctx, M: torch.Tensor, bias: torch.Tensor,
+                eps: float) -> torch.Tensor:
+        operation = lambda x: torch.min(torch.nn.functional.threshold(
+                x+bias, eps, eps), (1/eps)*torch.ones_like(x))
+        eigvals, eigvecs, M_rect = eig_operation(M, operation, "eigh")
+        ctx.save_for_backward(eigvals, eigvecs, bias)
+        ctx.eps = eps
+        return M_rect
+
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) ->\
+            Tuple[torch.Tensor, torch.Tensor, None]:
+        eps = ctx.eps
+        eigvals, eigvecs, bias = ctx.saved_tensors
+
+        operation = lambda x: torch.min(torch.nn.functional.threshold(
+                x+bias, eps, eps), (1/eps)*torch.ones_like(x))
+        grad_threshold = lambda x: (x > eps).type(x.dtype)
+        grad_min = lambda x: torch.where(
+                x > 1/eps, torch.ones_like(x), torch.zeros_like(x))
+
+        # Chain rule formula
+        grad_operation = lambda x: grad_threshold(x) * grad_min(
+                torch.nn.functional.threshold(x, eps, eps))
+
+        grad_input, grad_bias = eig_operation_gradient_inputandbias(
+                grad_output, eigvals, eigvecs, bias, operation, grad_operation)
+
+        return grad_input, grad_bias, None
 
 
 class ReEigFunction(Function):
