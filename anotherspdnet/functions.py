@@ -1150,3 +1150,29 @@ def spd_affine_invariant_geodesic(X: torch.Tensor, Y: torch.Tensor,
                 t)
             , sqrtm_X)
 
+
+def spd_affine_invariant_distance(X: torch.Tensor, Y: torch.Tensor) ->\
+        torch.Tensor:
+    """Affine invariant distance between two SPD matrices.
+
+    Parameters
+    ----------
+    X : torch.Tensor of shape (..., n, n)
+        Batch of SPD matrices.
+
+    Y : torch.Tensor of shape (..., n, n)
+        Batch of SPD matrices.
+
+    Returns
+    -------
+    d : torch.Tensor of shape (...,)
+        Batch of distances.
+    """
+
+    sqrtm_X_inv = InvSqrtmEigFunction.apply(X)
+    return torch.norm(
+            LogEigFunction.apply(
+                torch.einsum(
+                    '...ij,...jk,...kl->...il',
+                    sqrtm_X_inv, Y, sqrtm_X_inv)),
+                dim=(-2, -1), p='fro')
