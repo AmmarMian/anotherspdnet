@@ -31,3 +31,4 @@ The main dependencies of anotherSPDNet are:
 
 * `PyTorch <https://pytorch.org/>`_
 * `Geoopt <https://github.com/geoopt/geoopt>`_
+* `Tqdm <https://tqdm.github.io>`_
