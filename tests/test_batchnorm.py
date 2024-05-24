@@ -5,7 +5,6 @@ from unittest import TestCase, main
 
 import torch
 from torch.testing import assert_close
-import os
 
 from geoopt.manifolds import SymmetricPositiveDefinite, Sphere
 
@@ -72,3 +71,6 @@ class TestBatchNormSPD(TestCase):
     def test_repr(self):
         layer = batchnorm.BatchNormSPD(n_features=7)
         self.assertIsInstance(str(layer), str)
+
+if __name__ == "__main__":
+    main()

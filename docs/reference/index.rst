@@ -14,3 +14,4 @@ anotherspdnet package.
    utils
    analysis
    batchnorm
+   estimation
