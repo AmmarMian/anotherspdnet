@@ -148,12 +148,13 @@ class SCM(nn.Module):
         if self.assume_centered:
             _X = X
         else:
-            mean = torch.einsum('...ij->...j', X)/X.shape[-2]
-            _X = X - mean.unsqueeze(-2)
+            _X = X - X.mean(dim=-2, keepdim=True)
 
-        return torch.einsum('...ij,...jk->...ik',
-                            _X.transpose(-1, -2),
-                            _X)/(torch.prod(torch.Tensor(X.shape[:-2]))-self.correction)
+        Sigma = torch.einsum('...ij,...jk->...ik',
+                            _X.transpose(-2, -1),
+                            _X)/((torch.Tensor(X.shape[:-2])).prod()-self.correction)
+        # Just to be sure
+        return .5*(Sigma + Sigma.transpose(-2,-1))
 
 
 class Mestimation(nn.Module):
@@ -324,4 +325,5 @@ class Mestimation(nn.Module):
         if self.normalize is not None:
             Sigma_new = self.normalize(Sigma_new)
 
-        return Sigma_new
+        # For numerical stability
+        return .5*(Sigma_new + Sigma_new.transpose(-2,-1))
