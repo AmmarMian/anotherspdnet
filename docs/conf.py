@@ -26,7 +26,7 @@ autodoc_default_options = {
     'undoc-members':     True,
     'member-order':      'bysource',
 }
-autodoc_mock_imports = ['torch', 'geoopt']
+autodoc_mock_imports = ['torch', 'geoopt', 'tqdm']
 napoleon_include_init_with_doc = True
 
 # -- Options for HTML output -------------------------------------------------
