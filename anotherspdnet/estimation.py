@@ -237,7 +237,7 @@ class Mestimation(nn.Module):
             Updated estimate of covariance matrices.
 
         torch.Tensor of shape (..., n_features, n_features)
-            inverse sqrtm of updated estimate of covariance matrices.
+            Inverse sqrtm of updated estimate of covariance matrices.
         """
         batches_dimensions = X.shape[:-2]
         temp = torch.einsum('...ij,...jk->...ik',
@@ -283,7 +283,7 @@ class Mestimation(nn.Module):
             Estimated covariance matrices (one per batch).
         """
         batches_dimensions = X.shape[:-2]
-        if not init:
+        if init is None:
             Sigma = torch.eye(X.shape[-1], device=X.device)
             for dim in reversed(batches_dimensions):
                 Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,)*Sigma.ndim)
@@ -293,12 +293,17 @@ class Mestimation(nn.Module):
                     f"Size of initial covariance ({init.shape}) " +\
                     f"incompatible with data ({X.shape})!"
             if init.ndim > 2:
-                assert torch.all(batches_dimensions == init.shape[-2]), \
+                assert batches_dimensions == init.shape[:-2], \
                     f"Size of initial covariance ({init.shape}) " +\
                     f"incompatible with data ({X.shape})!"
 
             Sigma = init
             isqrtm_Sigma = InvSqrtmEigFunction.apply(Sigma)
+            if init.ndim == 2:
+                for dim in reversed(batches_dimensions):
+                    Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,)*Sigma.ndim)
+                    isqrtm_Sigma = isqrtm_Sigma.unsqueeze(0).repeat(
+                            (dim,) + (1,)*isqrtm_Sigma.ndim)
 
         if not self.assume_centered:
             X = X - X.mean(dim=-2, keepdim=True)
