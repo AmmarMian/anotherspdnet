@@ -152,7 +152,7 @@ class SCM(nn.Module):
 
         Sigma = torch.einsum('...ij,...jk->...ik',
                             _X.transpose(-2, -1),
-                            _X)/((torch.Tensor(X.shape[:-2])).prod()-self.correction)
+                            _X)/(X.shape[-2]-self.correction)
         # Just to be sure
         return .5*(Sigma + Sigma.transpose(-2,-1))
 
