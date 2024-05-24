@@ -51,6 +51,7 @@ def normalize_determinant(Sigma_batch: torch.Tensor) -> torch.Tensor:
 def student_function(
         x: torch.Tensor, n_features: int, nu: float) -> torch.Tensor:
     """Student function.
+
     Parameters
     ----------
     x : torch.Tensor
@@ -61,6 +62,7 @@ def student_function(
 
     nu : float
         Degrees of freedom.
+
     Returns
     -------
     torch.Tensor
