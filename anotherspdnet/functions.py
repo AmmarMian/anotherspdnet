@@ -1110,6 +1110,7 @@ def unvech_batch(X_vech: torch.Tensor) -> torch.Tensor:
     X = symmetrize(X)
     return X
 
+
 # Riemannian operations
 # -----------------------------
 def spd_affine_invariant_geodesic(X: torch.Tensor, Y: torch.Tensor,
@@ -1134,7 +1135,6 @@ def spd_affine_invariant_geodesic(X: torch.Tensor, Y: torch.Tensor,
     """
 
     # TODO: Make that we compute the less time possible eig decomposition
-
     assert t >= 0 and t <= 1, "t must be between 0 and 1"
 
     sqrtm_X = SqrtmEigFunction.apply(X)

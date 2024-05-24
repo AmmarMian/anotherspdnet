@@ -13,3 +13,4 @@ anotherspdnet package.
    functions
    utils
    analysis
+   batchnorm

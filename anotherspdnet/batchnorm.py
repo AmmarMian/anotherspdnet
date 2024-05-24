@@ -18,7 +18,7 @@ import warnings
 
 # from pyriemann.utils.mean import mean_riemann
 
-# Riemannian mea mean
+# Riemannian mean
 # TODO : compute the mean along axes we want
 # ---------------
 def riemannian_mean_spd(X: torch.Tensor, initial_stepsize: float = 1.0, 
@@ -80,7 +80,7 @@ def riemannian_mean_spd(X: torch.Tensor, initial_stepsize: float = 1.0,
             C12_inv = eigvecs @ torch.diag(inv_sqrt_eigvals) @ \
                     eigvecs.transpose(-2, -1)
 
-            # Getting the tangent space matrix
+            # Getting the tangent space matrices
             eigvals, eigvecs = torch.linalg.eigh(C12_inv @ X @ C12_inv)
             log_eigvals = torch.log(eigvals)
             log_matrices = torch.einsum('...ij,...jk,...kl->...il',
@@ -171,8 +171,6 @@ class BatchNormSPD(nn.Module):
         X : torch.Tensor of shape (..., N, N)
             Batch of SPD matrices. The mean is computed along the ... axes.
 
-        bias : torch.Tensor of shape (N, N)
-            Bias.
         Returns
         -------
         Y : torch.Tensor of shape (..., N, N)
