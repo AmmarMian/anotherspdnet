@@ -9,9 +9,7 @@ from .functions import InvSqrtmEigFunction
 
 
 def normalize_trace(Sigma_batch: torch.Tensor) -> torch.Tensor:
-    """Normalize covariance by the trace:
-    $\\operatorname{Tr}(\\boldsymbol{\\Sigma})=p$,
-    where $p$ is size of matrix.
+    """Normalize covariance by the trace (trace is equal to n_features).
     
     Parameters
     ----------
@@ -31,8 +29,7 @@ def normalize_trace(Sigma_batch: torch.Tensor) -> torch.Tensor:
 
 
 def normalize_determinant(Sigma_batch: torch.Tensor) -> torch.Tensor:
-    """Normalize covariance by the determinant:
-        $\\det(\\boldsymbol{\\Sigma})=1.
+    """Normalize covariance by the determinant (determinant=1).
     
     Parameters
     ----------
