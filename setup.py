@@ -7,6 +7,6 @@ setup(
     version="0.1.0",
     packages=find_packages(include=["anotherspdnet", "anotherspdnet.*"]),
     python_requires=">=3.6",
-    install_requires=["torch>=2.0.1", "scipy==1.13.0geoopt>=0.5.0", "tqdm"],
+    install_requires=["torch>=2.0.1", "scipy==1.13.0, geoopt>=0.5.0", "tqdm"],
     tests_require=["pytest", "pytest-cov", "pytest-sugar"],
 )
