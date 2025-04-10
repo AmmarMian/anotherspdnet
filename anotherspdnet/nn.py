@@ -17,9 +17,16 @@ from geoopt.manifolds import Stiefel, Sphere
 from geoopt.tensor import ManifoldParameter
 
 from .functions import (
-        BiMapFunction, ReEigFunction, LogEigFunction, 
-        vec_batch, unvec_batch, vech_batch, unvech_batch,
-        eig_operation, biMap, ReEigBiasFunction
+    BiMapFunction,
+    ReEigFunction,
+    LogEigFunction,
+    vec_batch,
+    unvec_batch,
+    vech_batch,
+    unvech_batch,
+    eig_operation,
+    biMap,
+    ReEigBiasFunction,
 )
 from .utils import initialize_weights_sphere, initialize_weights_stiefel
 
@@ -28,15 +35,19 @@ from .utils import initialize_weights_sphere, initialize_weights_stiefel
 # BiMap layer
 # =============================================================================
 class BiMap(nn.Module):
-
-    def __init__(self, n_in: int, n_out: int, n_batches: Optional[tuple] = None,
-                manifold: str = 'stiefel',
-                seed: Optional[int] = None,
-                dtype: torch.dtype = torch.float64,
-                device: torch.device = torch.device('cpu'),
-                 mm_mode: str = 'einsum',
-                use_autograd: bool = False) -> None:
-        """ BiMap layer in a SPDnet layer according to the paper:
+    def __init__(
+        self,
+        n_in: int,
+        n_out: int,
+        n_batches: Optional[tuple] = None,
+        manifold: str = "stiefel",
+        seed: Optional[int] = None,
+        dtype: torch.dtype = torch.float64,
+        device: torch.device = torch.device("cpu"),
+        mm_mode: str = "einsum",
+        use_autograd: bool = False,
+    ) -> None:
+        """BiMap layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
 
@@ -84,17 +95,17 @@ class BiMap(nn.Module):
         self.use_autograd = use_autograd
         self.dim = n_out
 
-        if mm_mode not in ['einsum', 'bmm']:
-            raise ValueError('mm_mode must be either einsum or bmm')
+        if mm_mode not in ["einsum", "bmm"]:
+            raise ValueError("mm_mode must be either einsum or bmm")
         self.mm_mode = mm_mode
 
-        if not manifold in ['stiefel', 'sphere']:
-            raise ValueError('manifold must be either stiefel or sphere')
+        if manifold not in ["stiefel", "sphere"]:
+            raise ValueError("manifold must be either stiefel or sphere")
 
         if not isinstance(device, torch.device):
-            raise TypeError('device must be a torch.device')
-        
-        if manifold == 'stiefel':
+            raise TypeError("device must be a torch.device")
+
+        if manifold == "stiefel":
             self.manifold = Stiefel()
             initialize_weights = initialize_weights_stiefel
         else:
@@ -114,11 +125,14 @@ class BiMap(nn.Module):
                 shape = (n_in, n_out)
             else:
                 shape = n_batches + (n_in, n_out)
-        _W = ManifoldParameter(torch.empty(shape, dtype=dtype, device=device), manifold=self.manifold)
-        self.W = initialize_weights(_W, seed=seed)
+        _W = ManifoldParameter(
+            torch.empty(shape, dtype=dtype, device=device),
+            manifold=self.manifold,
+        )
+        self.W = initialize_weights(_W, seed=seed).type(self.dtype)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """ Forward pass of the BiMap layer
+        """Forward pass of the BiMap layer
 
         Parameters
         ----------
@@ -142,20 +156,22 @@ class BiMap(nn.Module):
         return BiMapFunction.apply(X, _W, self.mm_mode)
 
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
 
         Returns
         -------
         str
             Representation of the layer
         """
-        return f'BiMap(n_in={self.n_in}, n_out={self.n_out}, " \
-                f"shape={self.W.shape}, use_autograd={self.use_autograd}, ' \
-                f'seed={self.seed}, dtype={self.dtype}, device={self.device}, '\
-                f'mm_mode={self.mm_mode})'
+        return (
+            f'BiMap(n_in={self.n_in}, n_out={self.n_out}, " \
+                f"shape={self.W.shape}, use_autograd={self.use_autograd}, '
+            f"seed={self.seed}, dtype={self.dtype}, device={self.device}, "
+            f"mm_mode={self.mm_mode})"
+        )
 
     def __str__(self) -> str:
-        """ String representation of the layer
+        """String representation of the layer
 
         Returns
         -------
@@ -169,13 +185,16 @@ class BiMap(nn.Module):
 # ReEig layer
 # =============================================================================
 class ReEigBias(nn.Module):
-
-    def __init__(self, dim: int, eps: float = 1e-4, 
-                 use_autograd: bool = False,
-                 dtype: torch.dtype = torch.float64,
-                 device: torch.device = torch.device('cpu'),
-                 seed: Optional[int] = None) -> None:
-        """ ReEig layer with a bias term.
+    def __init__(
+        self,
+        dim: int,
+        eps: float = 1e-4,
+        use_autograd: bool = False,
+        dtype: torch.dtype = torch.float64,
+        device: torch.device = torch.device("cpu"),
+        seed: Optional[int] = None,
+    ) -> None:
+        """ReEig layer with a bias term.
 
         Parameters
         ----------
@@ -210,8 +229,7 @@ class ReEigBias(nn.Module):
         # Initialize the bias term
         # init_bias = torch.randn(dim, dtype=self.dtype,
         #                         generator=torch.Generator().manual_seed(seed))
-        self.bias = nn.Parameter(torch.zeros(dim, dtype=self.dtype,
-                                             device=device))
+        self.bias = nn.Parameter(torch.zeros(dim, dtype=self.dtype, device=device))
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """Forward pass of the ReEig layer with bias
@@ -226,12 +244,13 @@ class ReEigBias(nn.Module):
         Y : torch.Tensor of shape (..., n_features, n_features)
             The regularized SPD matrices.
         """
-        assert X.shape[-1] == self.dim, (
-                f'Input matrices must have dimension {self.dim}')
+        assert X.shape[-1] == self.dim, f"Input matrices must have dimension {self.dim}"
 
         if self.use_autograd:
-            operation = lambda x: torch.min(torch.nn.functional.threshold(
-                x+self.bias, self.eps, self.eps), (1/self.eps)*torch.ones_like(x))
+            operation = lambda x: torch.min(
+                torch.nn.functional.threshold(x + self.bias, self.eps, self.eps),
+                (1 / self.eps) * torch.ones_like(x),
+            )
             _, _, res = eig_operation(X, operation)
 
         else:
@@ -239,9 +258,8 @@ class ReEigBias(nn.Module):
 
         return res
 
-
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
         Returns
         -------
         str
@@ -252,12 +270,16 @@ class ReEigBias(nn.Module):
 
 
 class ReEig(nn.Module):
-
-    def __init__(self, eps: float = 1e-4, use_autograd: bool = False,
-                mm_mode: str = 'einsum', eig_function: str = 'eigh',
-                formula: str = "brooks",
-                dim: Optional[int] = None) -> None:
-        """ ReEig layer in a SPDnet layer according to the paper:
+    def __init__(
+        self,
+        eps: float = 1e-4,
+        use_autograd: bool = False,
+        mm_mode: str = "einsum",
+        eig_function: str = "eigh",
+        formula: str = "brooks",
+        dim: Optional[int] = None,
+    ) -> None:
+        """ReEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
 
@@ -308,33 +330,34 @@ class ReEig(nn.Module):
             The regularized SPD matrices.
         """
         if self.use_autograd:
-            operation = lambda X: torch.nn.functional.threshold(
-                    X, self.eps, self.eps)
-            _, _, res = eig_operation(X, operation, self.eig_function,
-                                      self.mm_mode)
+            operation = lambda X: torch.nn.functional.threshold(X, self.eps, self.eps)
+            _, _, res = eig_operation(X, operation, self.eig_function, self.mm_mode)
             return res
-        return ReEigFunction.apply(X, self.eps, self.mm_mode,
-                                   self.eig_function, self.formula)
+        return ReEigFunction.apply(
+            X, self.eps, self.mm_mode, self.eig_function, self.formula
+        )
 
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
 
         Returns
         -------
         str
             Representation of the layer
         """
-        base_str = f'ReEig(eps={self.eps}, use_autograd={self.use_autograd}, ' \
-                f'mm_mode={self.mm_mode}, eig_function={self.eig_function}, ' \
-                f'formula={self.formula}'
+        base_str = (
+            f"ReEig(eps={self.eps}, use_autograd={self.use_autograd}, "
+            f"mm_mode={self.mm_mode}, eig_function={self.eig_function}, "
+            f"formula={self.formula}"
+        )
         if self.dim is None:
-            base_str += ')'
+            base_str += ")"
         else:
-            base_str += f', dim={self.dim})'
+            base_str += f", dim={self.dim})"
         return base_str
 
     def __str__(self) -> str:
-        """ String representation of the layer
+        """String representation of the layer
 
         Returns
         -------
@@ -348,11 +371,14 @@ class ReEig(nn.Module):
 # LogEig layer
 # =============================================================================
 class LogEig(nn.Module):
-
-    def __init__(self, use_autograd: bool = False,
-                 mm_mode: str = "einsum", eig_function: str= "eigh",
-                 formula: str = "brooks") -> None:
-        """ LogEig layer in a SPDnet layer according to the paper:
+    def __init__(
+        self,
+        use_autograd: bool = False,
+        mm_mode: str = "einsum",
+        eig_function: str = "eigh",
+        formula: str = "brooks",
+    ) -> None:
+        """LogEig layer in a SPDnet layer according to the paper:
             A Riemannian Network for SPD Matrix Learning, Huang et al
             AAAI Conference on Artificial Intelligence, 2017
 
@@ -395,25 +421,25 @@ class LogEig(nn.Module):
         """
         if self.use_autograd:
             operation = lambda X: torch.log(X)
-            _, _, res = eig_operation(X, operation, self.eig_function,
-                                      self.mm_mode)
+            _, _, res = eig_operation(X, operation, self.eig_function, self.mm_mode)
             return res
-        return LogEigFunction.apply(X, self.mm_mode, self.eig_function,
-                                    self.formula)
+        return LogEigFunction.apply(X, self.mm_mode, self.eig_function, self.formula)
 
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
 
         Returns
         -------
         str
             Representation of the layer
         """
-        return f'LogEig(auto_grad={self.use_autograd}, mm_mode={self.mm_mode}, ' \
-                f'eig_function={self.eig_function}, formula={self.formula})'
+        return (
+            f"LogEig(auto_grad={self.use_autograd}, mm_mode={self.mm_mode}, "
+            f"eig_function={self.eig_function}, formula={self.formula})"
+        )
 
     def __str__(self) -> str:
-        """ String representation of the layer
+        """String representation of the layer
 
         Returns
         -------
@@ -421,15 +447,14 @@ class LogEig(nn.Module):
             String representation of the layer
         """
         return self.__repr__()
-        
+
 
 # =============================================================================
 # Vectorization layer
 # =============================================================================
 class Vectorization(nn.Module):
-
     def __init__(self) -> None:
-        """Vectorization of a batch of matrices according to the 
+        """Vectorization of a batch of matrices according to the
         last two dimensions"""
         super().__init__()
 
@@ -449,7 +474,7 @@ class Vectorization(nn.Module):
         return vec_batch(X)
 
     def inverse_transform(self, X: torch.Tensor, n_rows: int) -> torch.Tensor:
-        """ Inverse transform of the Vectorization layer
+        """Inverse transform of the Vectorization layer
 
         Parameters
         ----------
@@ -467,17 +492,17 @@ class Vectorization(nn.Module):
         return unvec_batch(X, n_rows)
 
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
 
         Returns
         --------
         str
             Representation of the layer
         """
-        return 'Vectorization()'
+        return "Vectorization()"
 
     def __str__(self) -> str:
-        """ String representation of the layer
+        """String representation of the layer
 
         Returns
         -------
@@ -488,9 +513,8 @@ class Vectorization(nn.Module):
 
 
 class Vech(nn.Module):
-    
     def __init__(self) -> None:
-        """Vech operator of a batch of matrices according to the 
+        """Vech operator of a batch of matrices according to the
         last two dimensions"""
         super().__init__()
 
@@ -525,17 +549,17 @@ class Vech(nn.Module):
         return unvech_batch(X)
 
     def __repr__(self) -> str:
-        """ Representation of the layer
+        """Representation of the layer
 
         Returns
         --------
         str
             Representation of the layer
         """
-        return f'Vech()'
+        return f"Vech()"
 
     def __str__(self) -> str:
-        """ String representation of the layer
+        """String representation of the layer
 
         Returns
         -------

@@ -10,7 +10,7 @@ from .functions import InvSqrtmEigFunction
 
 def normalize_trace(Sigma_batch: torch.Tensor) -> torch.Tensor:
     """Normalize covariance by the trace (trace is equal to n_features).
-    
+
     Parameters
     ----------
     Sigma_batch: torch.Tensor
@@ -24,13 +24,13 @@ def normalize_trace(Sigma_batch: torch.Tensor) -> torch.Tensor:
         (..., n_features, n_features)
 
     """
-    traces = torch.einsum('...ii->...', Sigma_batch).unsqueeze(-1).unsqueeze(-1)
-    return Sigma_batch.shape[-2]*Sigma_batch/traces
+    traces = torch.einsum("...ii->...", Sigma_batch).unsqueeze(-1).unsqueeze(-1)
+    return Sigma_batch.shape[-2] * Sigma_batch / traces
 
 
 def normalize_determinant(Sigma_batch: torch.Tensor) -> torch.Tensor:
     """Normalize covariance by the determinant (determinant=1).
-    
+
     Parameters
     ----------
     Sigma_batch: torch.Tensor
@@ -45,11 +45,10 @@ def normalize_determinant(Sigma_batch: torch.Tensor) -> torch.Tensor:
 
     """
     det = torch.linalg.det(Sigma_batch).unsqueeze(-1).unsqueeze(-1)
-    return Sigma_batch/(torch.pow(det, 1/Sigma_batch.shape[-2]))
+    return Sigma_batch / (torch.pow(det, 1 / Sigma_batch.shape[-2]))
 
 
-def student_function(
-        x: torch.Tensor, n_features: int, nu: float) -> torch.Tensor:
+def student_function(x: torch.Tensor, n_features: int, nu: float) -> torch.Tensor:
     """Student function.
 
     Parameters
@@ -68,13 +67,10 @@ def student_function(
     torch.Tensor
         Computed Student function over input tensor.
     """
-    return (n_features + nu) / (nu +x)
+    return (n_features + nu) / (nu + x)
 
 
-def huber_function(
-        x: torch.Tensor,
-        delta: float,
-        beta: float) -> torch.Tensor:
+def huber_function(x: torch.Tensor, delta: float, beta: float) -> torch.Tensor:
     """Huber function defined as:
         * u(x) = 1/beta is x <= delta
         * u(x) = delta/(beta*x) if x > delta
@@ -96,11 +92,7 @@ def huber_function(
     torch.Tensor
         Computed Huber function over input tensor.
     """
-    return torch.where(
-                x <= delta,
-                1 / beta,
-                delta / (beta * x)
-            )
+    return torch.where(x <= delta, 1 / beta, delta / (beta * x))
 
 
 def tyler_function(x: torch.Tensor, n_features: int) -> torch.Tensor:
@@ -119,16 +111,14 @@ def tyler_function(x: torch.Tensor, n_features: int) -> torch.Tensor:
     torch.Tensor
         Computed Tyler function over input tensor.
     """
-    return n_features/x
+    return n_features / x
 
 
 class SCM(nn.Module):
     """Layer to compute SCM to estimate covariance matrix."""
 
-    def __init__(self, correction: Optional[int] = 1,
-                 assume_centered: Optional[bool] = False) -> None:
+    def __init__(self, assume_centered: Optional[bool] = True) -> None:
         super().__init__()
-        self.correction = correction
         self.assume_centered = assume_centered
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -146,14 +136,13 @@ class SCM(nn.Module):
         """
         if self.assume_centered:
             _X = X
+            n_samples = X.shape[-2]
         else:
             _X = X - X.mean(dim=-2, keepdim=True)
+            n_samples = X.shape[-2] - 1
 
-        Sigma = torch.einsum('...ij,...jk->...ik',
-                            _X.transpose(-2, -1),
-                            _X)/(X.shape[-2]-self.correction)
-        # Just to be sure
-        return .5*(Sigma + Sigma.transpose(-2,-1))
+        Sigma = torch.einsum("...ij,...jk->...ik", _X.transpose(-2, -1), _X) / n_samples
+        return 0.5 * (Sigma + Sigma.transpose(-2, -1))
 
 
 class Mestimation(nn.Module):
@@ -166,7 +155,8 @@ class Mestimation(nn.Module):
         tol: float = 1e-6,
         verbose: bool = False,
         assume_centered: bool = False,
-        normalize: Optional[Callable] = None) -> None:
+        normalize: Optional[Callable] = None,
+    ) -> None:
         """
         Initializes the M-estimation module.
 
@@ -192,7 +182,7 @@ class Mestimation(nn.Module):
             If None, no normalization will be performed.
         """
         super().__init__()
-        self.m_estimation_function = m_estimation_function 
+        self.m_estimation_function = m_estimation_function
         self.n_iter = n_iter
         self.tol = tol
         self.verbose = verbose
@@ -216,8 +206,7 @@ class Mestimation(nn.Module):
             self.pbar.update(1)
 
     def _iter_fixed_point(
-        self, isqrtm_Sigma_prev: torch.Tensor, X: torch.Tensor,
-        **kwargs
+        self, isqrtm_Sigma_prev: torch.Tensor, X: torch.Tensor, **kwargs
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """One iteration of fixed point algorithm for M-estimation.
 
@@ -242,26 +231,28 @@ class Mestimation(nn.Module):
             Inverse sqrtm of updated estimate of covariance matrices.
         """
         batches_dimensions = X.shape[:-2]
-        temp = torch.einsum('...ij,...jk->...ik',
-                            isqrtm_Sigma_prev,
-                            X.transpose(-2, -1))
+        temp = torch.einsum(
+            "...ij,...jk->...ik", isqrtm_Sigma_prev, X.transpose(-2, -1)
+        )
         quadratic = self.m_estimation_function(
-            torch.einsum("...ij,...ji->...i", temp.transpose(-2, -1), temp),
-            **kwargs
+            torch.einsum("...ij,...ji->...i", temp.transpose(-2, -1), temp), **kwargs
         )
         temp = X.transpose(-2, -1) * torch.sqrt(
             quadratic.unsqueeze(-2).repeat(
-                (1,)*len(batches_dimensions)+(X.shape[-1], 1))
+                (1,) * len(batches_dimensions) + (X.shape[-1], 1)
+            )
         )
-        Sigma = torch.einsum('...ij,...jk->...ik',
-                             temp, temp.transpose(-2, -1)) / X.shape[-2]
+        Sigma = (
+            torch.einsum("...ij,...jk->...ik", temp, temp.transpose(-2, -1))
+            / X.shape[-2]
+        )
         isqrtm_Sigma = InvSqrtmEigFunction.apply(Sigma)
 
         return Sigma, isqrtm_Sigma
 
-    def forward(self, X: torch.Tensor,
-                init: Optional[torch.Tensor] = None,
-                **kwargs) -> torch.Tensor:
+    def forward(
+        self, X: torch.Tensor, init: Optional[torch.Tensor] = None, **kwargs
+    ) -> torch.Tensor:
         """Compute M-estimator of covariance matrix on a batch of data.
 
         Parameters
@@ -288,32 +279,34 @@ class Mestimation(nn.Module):
         if init is None:
             Sigma = torch.eye(X.shape[-1], device=X.device)
             for dim in reversed(batches_dimensions):
-                Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,)*Sigma.ndim)
+                Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,) * Sigma.ndim)
             isqrtm_Sigma = Sigma.clone()
         else:
-            assert init.shape[-1] == X.shape[-1], \
-                    f"Size of initial covariance ({init.shape}) " +\
-                    f"incompatible with data ({X.shape})!"
+            assert init.shape[-1] == X.shape[-1], (
+                f"Size of initial covariance ({init.shape}) "
+                + f"incompatible with data ({X.shape})!"
+            )
             if init.ndim > 2:
-                assert batches_dimensions == init.shape[:-2], \
-                    f"Size of initial covariance ({init.shape}) " +\
-                    f"incompatible with data ({X.shape})!"
+                assert batches_dimensions == init.shape[:-2], (
+                    f"Size of initial covariance ({init.shape}) "
+                    + f"incompatible with data ({X.shape})!"
+                )
 
             Sigma = init
             isqrtm_Sigma = InvSqrtmEigFunction.apply(Sigma)
             if init.ndim == 2:
                 for dim in reversed(batches_dimensions):
-                    Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,)*Sigma.ndim)
+                    Sigma = Sigma.unsqueeze(0).repeat((dim,) + (1,) * Sigma.ndim)
                     isqrtm_Sigma = isqrtm_Sigma.unsqueeze(0).repeat(
-                            (dim,) + (1,)*isqrtm_Sigma.ndim)
+                        (dim,) + (1,) * isqrtm_Sigma.ndim
+                    )
 
         if not self.assume_centered:
             X = X - X.mean(dim=-2, keepdim=True)
 
         self._init_pbar()
         for _ in range(self.n_iter):
-            Sigma_new, isqrtm_Sigma = self._iter_fixed_point(isqrtm_Sigma, X,
-                                                             **kwargs)
+            Sigma_new, isqrtm_Sigma = self._iter_fixed_point(isqrtm_Sigma, X, **kwargs)
             delta = torch.norm(Sigma_new - Sigma, "fro") / torch.norm(Sigma, "fro")
             Sigma = Sigma_new
             self._update_pbar(delta)
@@ -330,4 +323,4 @@ class Mestimation(nn.Module):
             Sigma_new = self.normalize(Sigma_new)
 
         # For numerical stability
-        return .5*(Sigma_new + Sigma_new.transpose(-2,-1))
+        return 0.5 * (Sigma_new + Sigma_new.transpose(-2, -1))
