@@ -393,7 +393,7 @@ def construct_L_matrix(
     L_matrix : torch.Tensor of shape (..., n_features, n_features)
         matrix L of brooks
     """
-    deriveigvals = torch.diagonal(deriveigvals, -1, -2)
+    deriveigvals = torch.diagonal(deriveigvals, dim1=-2, dim2=-1)
     denominator = eigvals.unsqueeze(-1) - eigvals.unsqueeze(-2)
     numerator = eigvals_.unsqueeze(-1) - eigvals_.unsqueeze(-2)
 
