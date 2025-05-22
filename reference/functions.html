@@ -1,0 +1,945 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Functions &mdash; AnotherSPDNet  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Utils" href="utils.html" />
+    <link rel="prev" title="NN" href="nn.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            AnotherSPDNet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Package reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nn.html">NN</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.biMap"><code class="docutils literal notranslate"><span class="pre">biMap()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.biMap_gradient"><code class="docutils literal notranslate"><span class="pre">biMap_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.BiMapFunction"><code class="docutils literal notranslate"><span class="pre">BiMapFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.BiMapFunction.forward"><code class="docutils literal notranslate"><span class="pre">BiMapFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.BiMapFunction.backward"><code class="docutils literal notranslate"><span class="pre">BiMapFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.eig_operation"><code class="docutils literal notranslate"><span class="pre">eig_operation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.eig_operation_gradient_eigs"><code class="docutils literal notranslate"><span class="pre">eig_operation_gradient_eigs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.construct_L_matrix"><code class="docutils literal notranslate"><span class="pre">construct_L_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.eig_operation_gradient_inputandbias"><code class="docutils literal notranslate"><span class="pre">eig_operation_gradient_inputandbias()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.eig_operation_gradient"><code class="docutils literal notranslate"><span class="pre">eig_operation_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.re_operation"><code class="docutils literal notranslate"><span class="pre">re_operation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.re_operation_gradient"><code class="docutils literal notranslate"><span class="pre">re_operation_gradient()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.ReEigBiasFunction"><code class="docutils literal notranslate"><span class="pre">ReEigBiasFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ReEigBiasFunction.forward"><code class="docutils literal notranslate"><span class="pre">ReEigBiasFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ReEigBiasFunction.backward"><code class="docutils literal notranslate"><span class="pre">ReEigBiasFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.ReEigFunction"><code class="docutils literal notranslate"><span class="pre">ReEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ReEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">ReEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ReEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">ReEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.LogEigFunction"><code class="docutils literal notranslate"><span class="pre">LogEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.LogEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">LogEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.LogEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">LogEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.ExpEigFunction"><code class="docutils literal notranslate"><span class="pre">ExpEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ExpEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">ExpEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.ExpEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">ExpEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.SqrtmEigFunction"><code class="docutils literal notranslate"><span class="pre">SqrtmEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.SqrtmEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">SqrtmEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.SqrtmEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">SqrtmEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.InvSqrtmEigFunction"><code class="docutils literal notranslate"><span class="pre">InvSqrtmEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.InvSqrtmEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">InvSqrtmEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.InvSqrtmEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">InvSqrtmEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction"><code class="docutils literal notranslate"><span class="pre">SqrtmAndInvSqrtmEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">SqrtmAndInvSqrtmEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">SqrtmAndInvSqrtmEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.PowerEigFunction"><code class="docutils literal notranslate"><span class="pre">PowerEigFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.PowerEigFunction.forward"><code class="docutils literal notranslate"><span class="pre">PowerEigFunction.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anotherspdnet.functions.PowerEigFunction.backward"><code class="docutils literal notranslate"><span class="pre">PowerEigFunction.backward()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.vec_batch"><code class="docutils literal notranslate"><span class="pre">vec_batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.unvec_batch"><code class="docutils literal notranslate"><span class="pre">unvec_batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.vech_batch"><code class="docutils literal notranslate"><span class="pre">vech_batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.unvech_batch"><code class="docutils literal notranslate"><span class="pre">unvech_batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.spd_affine_invariant_geodesic"><code class="docutils literal notranslate"><span class="pre">spd_affine_invariant_geodesic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.functions.spd_affine_invariant_distance"><code class="docutils literal notranslate"><span class="pre">spd_affine_invariant_distance()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="batchnorm.html">Batchnorm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="estimation.html">Estimation</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AnotherSPDNet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Package reference</a></li>
+      <li class="breadcrumb-item active">Functions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/functions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="functions">
+<h1>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h1>
+<p>The functions module contains all useful python functions and torch functions
+for the layers in the model.</p>
+<dl class="py function" id="module-anotherspdnet.functions">
+<dt class="sig sig-object py" id="anotherspdnet.functions.biMap">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">biMap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#biMap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.biMap" title="Link to this definition"></a></dt>
+<dd><p>BiMap transform in a SPDnet layer according to the paper:</p>
+<blockquote>
+<div><p>“A Riemannian Network for SPD Matrix Learning”, Huang et al
+AAAI Conference on Artificial Intelligence, 2017</p>
+</div></blockquote>
+<p>The mapping is as follows:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{Y} = \mathbf{W}^T \mathbf{X} \mathbf{W},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{X}\in\mathcal{S}_{n_{\mathrm{in}}}^{++}\)</span> is the
+input SPD matrix and <span class="math notranslate nohighlight">\(\mathbf{W}\in\mathcal{S}t(n_{\mathrm{in}},
+n_{\mathrm{out}})\)</span> is an orthogonal weight matrix. For convenience, the
+input <strong>W</strong> of this function is the transpose of the weight matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_in</em><em>, </em><em>n_in</em><em>)</em>) – Batches of input SPD matrices.</p></li>
+<li><p><strong>W</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_out</em><em>, </em><em>n_in</em><em>)</em>) – Batch of Stiefel weight matrices
+(or their transpose in case n_out &gt; n_in).
+W.ndim must be 2 if X.ndim is 2. Then for higher number of dimensions,
+W.ndim must be X.ndim-1. (We will repeat the -3 dimension to match the
+number of matrices in X)</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the bilinear mapping. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Y</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_out, n_out)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.biMap_gradient">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">biMap_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#biMap_gradient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.biMap_gradient" title="Link to this definition"></a></dt>
+<dd><p>Gradient of biMap towars input and weight matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_in</em><em>, </em><em>n_in</em><em>)</em>) – Batches of input SPD matrices.</p></li>
+<li><p><strong>W</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_out</em><em>, </em><em>n_in</em><em>)</em>) – Batch of Stiefel weight matrices
+(or their transpose in case n_out &gt; n_in).
+W.ndim must be 2 if X.ndim is 2. Then for higher number of dimesions,
+W.ndim must be X.ndim-1. (We will repeat the -3 dimension to match the
+number of matrices in X)</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_out</em><em>, </em><em>n_out</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the bilinear mapping. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>grad_input</strong> (<em>torch.Tensor of shape (…, n_in, n_in)</em>) – Gradient of the loss with respect to the input of the layer.</p></li>
+<li><p><strong>grad_weight</strong> (<em>torch.Tensor of shape (…, n_out, n_in)</em>) – Gradient of the loss with respect to the weight of the layer.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.BiMapFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">BiMapFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#BiMapFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.BiMapFunction" title="Link to this definition"></a></dt>
+<dd><p>Bilinear mapping function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.BiMapFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#BiMapFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.BiMapFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the bilinear mapping function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>n_bathces</em><em>, </em><em>n_matrices</em><em>, </em><em>n_in</em><em>, </em><em>n_in</em><em>)</em>) – Batch of several SPD matrices.</p></li>
+<li><p><strong>W</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>n_batches</em><em>, </em><em>n_in</em><em>, </em><em>n_out</em><em>)</em>) – Batch of Stiefel weight matrices.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the bilinear mapping. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Y</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (n_batches, n_matrices, n_out, n_out)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.BiMapFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#BiMapFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.BiMapFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the bilinear mapping function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>n_batches</em><em>, </em><em>n_matrices</em><em>, </em><em>n_out</em><em>, </em><em>n_out</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>grad_input</strong> (<em>torch.Tensor of shape (n_batches, n_matrices, n_in, n_in)</em>) – Gradient of the loss with respect to the input of the layer.</p></li>
+<li><p><strong>grad_weight</strong> (<em>torch.Tensor of shape (n_batches, n_in, n_out)</em>) – Gradient of the loss with respect to the weight of the layer.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.eig_operation">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">eig_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#eig_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.eig_operation" title="Link to this definition"></a></dt>
+<dd><p>Generic functions to compute an operation on the eigenvalues of a
+SPD matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M</strong> (<em>torch.Tensor</em>) – SPD matrix of shape (…, n_features, n_features)</p></li>
+<li><p><strong>operation</strong> (<em>Callable</em>) – function to apply to the eigenvalues. Any unknown keyword args passed
+to this function are passed to the operation function.</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.
+Default is “eig” for torch.eig.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments to pass to the operation function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em>) – eigenvalues of shape (…, n_features)
+of the SPD matrices in M.</p></li>
+<li><p><strong>eigvecs</strong> (<em>torch.Tensor</em>) – eigenvectors of shape (…, n_features, n_features)
+of the SPD matrices in M.</p></li>
+<li><p><strong>result</strong> (<em>torch.Tensor</em>) – result of the operation on the eigenvalues of shape
+(…, n_matrices, n_features) and reconstructed from the
+eigenvectors.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.eig_operation_gradient_eigs">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">eig_operation_gradient_eigs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#eig_operation_gradient_eigs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.eig_operation_gradient_eigs" title="Link to this definition"></a></dt>
+<dd><p>Gradient of an operation on the eigenvalues of a SPD matrix towards the
+eigenvalues and eigenvectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em>) – gradient of the loss function wrt the output of the operation.
+of shape (…, n_features, n_features)</p></li>
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em>) – eigenvalues of shape (…, n_features)</p></li>
+<li><p><strong>eigvecs</strong> (<em>torch.Tensor</em>) – eigenvectors of shape (…, n_features, n_features)</p></li>
+<li><p><strong>operation</strong> (<em>Callable</em>) – function to apply to the eigenvalues. Any unknown keyword args passed
+to this function are passed to the operation function.</p></li>
+<li><p><strong>grad_operation</strong> (<em>Callable</em>) – function to apply to the gradient of the operation. Any unknown
+keyword args passed to this function are passed to the operation
+function.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments to pass to the operation and gradient functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>grad_eigvals</strong> (<em>torch.Tensor</em>) – gradient of the loss with respect to the eigenvalues of the layer.</p></li>
+<li><p><strong>grad_eigvecs</strong> (<em>torch.Tensor</em>) – gradient of the loss with respect to the eigenvectors of the layer.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.construct_L_matrix">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">construct_L_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvals_</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deriveigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#construct_L_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.construct_L_matrix" title="Link to this definition"></a></dt>
+<dd><p>Constructs the matrix L of brooks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>)</em>) – eigenvalues of the SPD matrices</p></li>
+<li><p><strong>eigvals</strong> – f(eigenvalues) of the SPD matrices</p></li>
+<li><p><strong>deriveigvals</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – f’(eigenvalues) of the SPD matrices</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>L_matrix</strong> – matrix L of brooks</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.eig_operation_gradient_inputandbias">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">eig_operation_gradient_inputandbias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#eig_operation_gradient_inputandbias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.eig_operation_gradient_inputandbias" title="Link to this definition"></a></dt>
+<dd><p>Gradient of an operation on the eigenvalues of a SPD matrix towards the
+input and the bias for ReEigBias module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em>) – gradient of the loss function wrt the output of the operation.
+of shape (…, n_features, n_features)</p></li>
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em>) – eigenvalues of shape (…, n_features)</p></li>
+<li><p><strong>eigvecs</strong> (<em>torch.Tensor</em>) – eigenvectors of shape (…, n_features, n_features)</p></li>
+<li><p><strong>bias</strong> (<em>torch.Tensor</em>) – bias of shape (…, n_features)</p></li>
+<li><p><strong>operation</strong> (<em>Callable</em>) – function to apply to the eigenvalues. Any unknown keyword args passed
+to this function are passed to the operation function.</p></li>
+<li><p><strong>grad_operation</strong> (<em>Callable</em>) – function to apply to the gradient of the operation.
+Any unknown keyword args passed to this function are passed to the
+operation function.</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments to pass to the operation and gradient functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>grad_input</strong> (<em>torch.Tensor</em>) – gradient of the loss with respect to the input of the layer.</p></li>
+<li><p><strong>grad_bias</strong> (<em>torch.Tensor</em>) – gradient of the loss with respect to the bias of the layer.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.eig_operation_gradient">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">eig_operation_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formula</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'brooks'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#eig_operation_gradient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.eig_operation_gradient" title="Link to this definition"></a></dt>
+<dd><p>Generic function to compute the gradient of an operation on the
+eigenvalues of a SPD matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em>) – gradient of the loss function wrt the output of the operation.
+of shape (…, n_features, n_features)</p></li>
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em>) – eigenvalues of shape (…, n_features)</p></li>
+<li><p><strong>eigvecs</strong> (<em>torch.Tensor</em>) – eigenvectors of shape (…, n_features, n_features)</p></li>
+<li><p><strong>operation</strong> (<em>Callable</em>) – function to apply to the eigenvalues. Any unknown keyword args passed
+to this function are passed to the operation function.</p></li>
+<li><p><strong>grad_operation</strong> (<em>Callable</em>) – function to apply to the gradient of the operation. Any unknown
+keyword args passed to this function are passed to the operation
+function.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>formula</strong> (<em>str</em>) – <dl class="simple">
+<dt>Formula to compute the gradient of the operation. Choices are:</dt><dd><p>”brooks” or “ionescu”. Default is “brooks</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>**kwargs</strong> – keyword arguments to pass to the operation and gradient functions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.re_operation">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">re_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#re_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.re_operation" title="Link to this definition"></a></dt>
+<dd><p>Rectification of the eigenvalues of a SPD matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>)</em>) – eigenvalues of the SPD matrices</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – Value for the rectification of the eigenvalues.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>eigvals_rect</strong> – eigenvalues of the SPD matrices with rectified eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.re_operation_gradient">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">re_operation_gradient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.float64</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#re_operation_gradient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.re_operation_gradient" title="Link to this definition"></a></dt>
+<dd><p>Gradient of the rectification of the eigenvalues of a SPD matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eigvals</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>)</em>) – eigenvalues of the SPD matrices</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – Value for the rectification of the eigenvalues.</p></li>
+<li><p><strong>dtype</strong> (<em>Callable</em>) – Casting type of the gradient. Default is torch.float64.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>eigvals_rect</strong> – eigenvalues of the SPD matrices with rectified eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigBiasFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">ReEigBiasFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigBiasFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigBiasFunction" title="Link to this definition"></a></dt>
+<dd><p>ReEigBias function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigBiasFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigBiasFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigBiasFunction.forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigBiasFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigBiasFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigBiasFunction.backward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">ReEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigFunction" title="Link to this definition"></a></dt>
+<dd><p>ReEig function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formula</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'brooks'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the ReEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>M</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>eps</strong> (<em>float</em>) – Value for the rectification of the eigenvalues.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.</p></li>
+<li><p><strong>formula</strong> (<em>str</em>) – <dl class="simple">
+<dt>Formula to compute the gradient of the operation. Choices are:</dt><dd><p>”brooks” or “ionescu”. Default is “brooks”</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>M_rect</strong> – Batch of SPD matrices with rectified eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ReEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ReEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ReEigFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the ReEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – Gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.LogEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">LogEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#LogEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.LogEigFunction" title="Link to this definition"></a></dt>
+<dd><p>LogEig function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.LogEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formula</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'brooks'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#LogEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.LogEigFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the logEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>M</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.</p></li>
+<li><p><strong>formula</strong> (<em>str</em>) – <dl class="simple">
+<dt>Formula to compute the gradient of the operation. Choices are:</dt><dd><p>”brooks” or “ionescu”. Default is “brooks”</p>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>M_rect</strong> – Batch of SPD matrices with rectified eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.LogEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#LogEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.LogEigFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the logEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – Gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ExpEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">ExpEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ExpEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ExpEigFunction" title="Link to this definition"></a></dt>
+<dd><p>ExpEig function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ExpEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ExpEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ExpEigFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the ExpEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>M</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>M_exp</strong> – Batch of SPD matrices with exponentiated eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.ExpEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#ExpEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.ExpEigFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the ExpEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – Gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">SqrtmEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmEigFunction" title="Link to this definition"></a></dt>
+<dd><p>SqrtmEig function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmEigFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the SqrtmEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>M</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>M_sqrtm</strong> – Batch of SPD matrices with square root of eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmEigFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the SqrtmEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – Gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.InvSqrtmEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">InvSqrtmEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#InvSqrtmEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.InvSqrtmEigFunction" title="Link to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.InvSqrtmEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#InvSqrtmEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.InvSqrtmEigFunction.forward" title="Link to this definition"></a></dt>
+<dd><p>Forward pass of the InvSqrtmEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to save tensors for the backward pass.</p></li>
+<li><p><strong>M</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>mm_mode</strong> (<em>str</em>) – <dl class="simple">
+<dt>Mode for the computation of the matrix multiplication. Choices are:</dt><dd><p>”einsum” or “bmm”. Default is “einsum”.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>eig_function</strong> (<em>str</em>) – Name of the function to compute the eigenvalues and eigenvectors.
+Choices are: “eigh” or “eig”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>M_inv_sqrtm</strong> – Batch of SPD matrices with inverse square root of eigenvalues.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.InvSqrtmEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#InvSqrtmEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.InvSqrtmEigFunction.backward" title="Link to this definition"></a></dt>
+<dd><p>Backward pass of the InvSqrtmEig function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>torch.autograd.function._ContextMethodMixin</em>) – Context object to retrieve tensors saved during the forward pass.</p></li>
+<li><p><strong>grad_output</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>, </em><em>n_features</em><em>)</em>) – Gradient of the loss with respect to the output of the layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>grad_input</strong> – Gradient of the loss with respect to the input of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">SqrtmAndInvSqrtmEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmAndInvSqrtmEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction" title="Link to this definition"></a></dt>
+<dd><p>Function that computes the square root and inverse square root of the
+eigenvalues of a SPD matrix.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mm_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'einsum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eig_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'eigh'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmAndInvSqrtmEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output_sqrtm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output_inv_sqrtm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#SqrtmAndInvSqrtmEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.backward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="anotherspdnet.functions.PowerEigFunction">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">PowerEigFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#PowerEigFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.PowerEigFunction" title="Link to this definition"></a></dt>
+<dd><p>PowerEig function.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.PowerEigFunction.forward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#PowerEigFunction.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.PowerEigFunction.forward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="anotherspdnet.functions.PowerEigFunction.backward">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#PowerEigFunction.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.PowerEigFunction.backward" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.vec_batch">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">vec_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#vec_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.vec_batch" title="Link to this definition"></a></dt>
+<dd><p>Vectorize a batch of tensors along last two dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>k</em><em>)</em>) – Batch of matrices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_vec</strong> – Batch of vectorized matrices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n*k)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.unvec_batch">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">unvec_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_vec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#unvec_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.unvec_batch" title="Link to this definition"></a></dt>
+<dd><p>Unvectorize a batch of tensors along last dimension.
+:param X_vec: Batch of vectorized matrices.
+:type X_vec: torch.Tensor of shape (…, n*k)
+:param n: Number of rows of the matrices.
+:type n: int</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> – Batch of matrices.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor of shape (…, n, k)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.vech_batch">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">vech_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#vech_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.vech_batch" title="Link to this definition"></a></dt>
+<dd><p>Vectorize the lower triangular part of a batch of square matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>n</em><em>)</em>) – Batch of matrices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_vech</strong> – Batch of vectorized matrices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n*(n+1)//2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.unvech_batch">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">unvech_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_vech</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#unvech_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.unvech_batch" title="Link to this definition"></a></dt>
+<dd><p>Unvectorize a batch of tensors along last dimension.
+:param X_vech: Batch of vectorized matrices.
+:type X_vech: torch.Tensor of shape (…, n*(n+1)//2)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> – Batch of matrices.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor of shape (…, n, n)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.spd_affine_invariant_geodesic">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">spd_affine_invariant_geodesic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#spd_affine_invariant_geodesic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.spd_affine_invariant_geodesic" title="Link to this definition"></a></dt>
+<dd><p>Affine invariant geodesic between two SPD matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>n</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>n</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>t</strong> (<em>float</em>) – Parameter of the geodesic. between 0 and 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Z</strong> – Batch of SPD matrices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n, n)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.functions.spd_affine_invariant_distance">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.functions.</span></span><span class="sig-name descname"><span class="pre">spd_affine_invariant_distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/functions.html#spd_affine_invariant_distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.functions.spd_affine_invariant_distance" title="Link to this definition"></a></dt>
+<dd><p>Affine invariant distance between two SPD matrices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>n</em><em>)</em>) – Batch of SPD matrices.</p></li>
+<li><p><strong>Y</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>n</em><em>)</em>) – Batch of SPD matrices.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>d</strong> – Batch of distances.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="nn.html" class="btn btn-neutral float-left" title="NN" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Ammar Mian, Florent Bouchard, Guillaume Ginolhac, Paul Chauchat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

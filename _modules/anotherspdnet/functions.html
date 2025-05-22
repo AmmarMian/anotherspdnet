@@ -1,0 +1,1493 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>anotherspdnet.functions &mdash; AnotherSPDNet  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AnotherSPDNet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Package reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AnotherSPDNet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">anotherspdnet.functions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for anotherspdnet.functions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># ========================================</span>
+<span class="c1"># FileName: functions.py</span>
+<span class="c1"># Date: 18 juillet 2023 - 16:39</span>
+<span class="c1"># Author: Ammar Mian</span>
+<span class="c1"># Email: ammar.mian@univ-smb.fr</span>
+<span class="c1"># GitHub: https://github.com/ammarmian</span>
+<span class="c1"># Brief: Functions relative to SPDnet</span>
+<span class="c1">#        implementation</span>
+<span class="c1"># =========================================</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Callable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">prod</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.autograd</span><span class="w"> </span><span class="kn">import</span> <span class="n">Function</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">symmetrize</span><span class="p">,</span>
+    <span class="n">construct_eigdiff_matrix</span><span class="p">,</span>
+    <span class="n">zero_offdiag</span><span class="p">,</span>
+    <span class="n">nd_tensor_to_3d</span><span class="p">,</span>
+    <span class="n">threed_tensor_to_nd</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># BiMap</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="biMap">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.biMap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">biMap</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;BiMap transform in a SPDnet layer according to the paper:</span>
+
+<span class="sd">        \&quot;A Riemannian Network for SPD Matrix Learning\&quot;, Huang et al</span>
+<span class="sd">        AAAI Conference on Artificial Intelligence, 2017</span>
+
+<span class="sd">    The mapping is as follows:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\mathbf{Y} = \\mathbf{W}^T \\mathbf{X} \\mathbf{W},</span>
+
+<span class="sd">    where :math:`\\mathbf{X}\\in\\mathcal{S}_{n_{\\mathrm{in}}}^{++}` is the</span>
+<span class="sd">    input SPD matrix and :math:`\\mathbf{W}\\in\\mathcal{S}t(n_{\\mathrm{in}},</span>
+<span class="sd">    n_{\\mathrm{out}})` is an orthogonal weight matrix. For convenience, the</span>
+<span class="sd">    input **W** of this function is the transpose of the weight matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n_in, n_in)</span>
+<span class="sd">        Batches of input SPD matrices.</span>
+
+<span class="sd">    W : torch.Tensor of shape (..., n_out, n_in)</span>
+<span class="sd">        Batch of Stiefel weight matrices</span>
+<span class="sd">        (or their transpose in case n_out &gt; n_in).</span>
+<span class="sd">        W.ndim must be 2 if X.ndim is 2. Then for higher number of dimensions,</span>
+<span class="sd">        W.ndim must be X.ndim-1. (We will repeat the -3 dimension to match the</span>
+<span class="sd">        number of matrices in X)</span>
+
+<span class="sd">    mode : str</span>
+<span class="sd">        Mode for the computation of the bilinear mapping. Choices are:</span>
+<span class="sd">            &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Y : torch.Tensor of shape (..., n_out, n_out)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check the input</span>
+    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;X must be at least a 2-dimensional tensor.&quot;</span>
+    <span class="k">assert</span> <span class="n">W</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;W must be a at least a 2-dimensional tensor.&quot;</span>
+    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;X must be square.&quot;</span>
+    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">W</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;X and W must have the compatible dimensions.&quot;</span>
+    <span class="k">assert</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;einsum&quot;</span><span class="p">,</span> <span class="s2">&quot;bmm&quot;</span><span class="p">],</span> <span class="sa">f</span><span class="s2">&quot;mode must be in [&#39;einsum&#39;, &#39;bmm&#39;], got </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">W</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;W must be a 2-dimensional tensor for X.ndim=</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,jk,kl-&gt;il&quot;</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">W</span> <span class="o">@</span> <span class="n">X</span> <span class="o">@</span> <span class="n">W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">W</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;X and W must have compatible dimensions: &quot;</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;X.ndim=</span><span class="si">{</span><span class="n">X</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2"> and W.ndim=</span><span class="si">{</span><span class="n">W</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...cd,...ide,...ef-&gt;...icf&quot;</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># We need to construct 3-D tensors with the same number of matrices</span>
+            <span class="n">_X</span> <span class="o">=</span> <span class="n">nd_tensor_to_3d</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+            <span class="n">n_repeats</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">repeat_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">W</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">n_repeats</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="n">_W</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="n">repeat_tuple</span><span class="p">)</span>
+            <span class="n">_W</span> <span class="o">=</span> <span class="n">nd_tensor_to_3d</span><span class="p">(</span><span class="n">_W</span><span class="p">)</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">_W</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">_X</span><span class="p">,</span> <span class="n">_W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">symmetrize</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+            <span class="n">n_out</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">threed_tensor_to_nd</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">n_out</span><span class="p">,</span> <span class="n">n_out</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="biMap_gradient">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.biMap_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">biMap_gradient</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gradient of biMap towars input and weight matrix</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n_in, n_in)</span>
+<span class="sd">        Batches of input SPD matrices.</span>
+
+<span class="sd">    W : torch.Tensor of shape (..., n_out, n_in)</span>
+<span class="sd">        Batch of Stiefel weight matrices</span>
+<span class="sd">        (or their transpose in case n_out &gt; n_in).</span>
+<span class="sd">        W.ndim must be 2 if X.ndim is 2. Then for higher number of dimesions,</span>
+<span class="sd">        W.ndim must be X.ndim-1. (We will repeat the -3 dimension to match the</span>
+<span class="sd">        number of matrices in X)</span>
+
+<span class="sd">    grad_output: torch.Tensor of shape (..., n_out, n_out)</span>
+<span class="sd">        Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">    mode : str</span>
+<span class="sd">        Mode for the computation of the bilinear mapping. Choices are:</span>
+<span class="sd">            &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    grad_input : torch.Tensor of shape (..., n_in, n_in)</span>
+<span class="sd">        Gradient of the loss with respect to the input of the layer.</span>
+
+<span class="sd">    grad_weight : torch.Tensor of shape (..., n_out, n_in)</span>
+<span class="sd">        Gradient of the loss with respect to the weight of the layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,jk,kl-&gt;il&quot;</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+            <span class="n">grad_weight</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,jk,kl-&gt;il&quot;</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">grad_output</span> <span class="o">@</span> <span class="n">W</span>
+            <span class="n">grad_weight</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">grad_output</span> <span class="o">@</span> <span class="n">W</span> <span class="o">@</span> <span class="n">X</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...ab,...ibc,...cd-&gt;...iad&quot;</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">W</span>
+            <span class="p">)</span>
+
+            <span class="n">grad_weight</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...iab,...bc,...icd-&gt;...ad&quot;</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_X</span> <span class="o">=</span> <span class="n">nd_tensor_to_3d</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">repeat_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">W</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">],)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="n">_W</span> <span class="o">=</span> <span class="n">W</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="o">*</span><span class="n">repeat_tuple</span><span class="p">)</span>
+            <span class="n">_W</span> <span class="o">=</span> <span class="n">nd_tensor_to_3d</span><span class="p">(</span><span class="n">_W</span><span class="p">)</span>
+
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">_W</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">grad_output</span><span class="p">,</span> <span class="n">_W</span><span class="p">))</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">threed_tensor_to_nd</span><span class="p">(</span><span class="n">grad_input</span><span class="p">,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">grad_weight</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">grad_output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">bmm</span><span class="p">(</span><span class="n">_W</span><span class="p">,</span> <span class="n">_X</span><span class="p">))</span>
+            <span class="n">grad_weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">threed_tensor_to_nd</span><span class="p">(</span><span class="n">grad_weight</span><span class="p">,</span> <span class="n">_W</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">grad_input</span><span class="p">,</span> <span class="n">grad_weight</span></div>
+
+
+
+<span class="c1"># Defining torch functional with the actual gradient computation</span>
+<div class="viewcode-block" id="BiMapFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.BiMapFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BiMapFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bilinear mapping function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BiMapFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.BiMapFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the bilinear mapping function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+<span class="sd">        X : torch.Tensor of shape (n_bathces, n_matrices, n_in, n_in)</span>
+<span class="sd">            Batch of several SPD matrices.</span>
+
+<span class="sd">        W : torch.Tensor of shape (n_batches, n_in, n_out)</span>
+<span class="sd">            Batch of Stiefel weight matrices.</span>
+
+<span class="sd">        mode : str</span>
+<span class="sd">            Mode for the computation of the bilinear mapping. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Y : torch.Tensor of shape (n_batches, n_matrices, n_out, n_out)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="n">biMap</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Y</span></div>
+
+
+<div class="viewcode-block" id="BiMapFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.BiMapFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the bilinear mapping function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (n_batches, n_matrices, n_out, n_out)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (n_batches, n_matrices, n_in, n_in)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        grad_weight : torch.Tensor of shape (n_batches, n_in, n_out)</span>
+<span class="sd">            Gradient of the loss with respect to the weight of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mode</span>
+        <span class="k">return</span> <span class="n">biMap_gradient</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span></div>
+</div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Operations  on the eigenvalues of a SPD matrix</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="eig_operation">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.eig_operation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">eig_operation</span><span class="p">(</span>
+    <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span><span class="p">,</span>
+    <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic functions to compute an operation on the eigenvalues of a</span>
+<span class="sd">    SPD matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    M : torch.Tensor</span>
+<span class="sd">        SPD matrix of shape (..., n_features, n_features)</span>
+
+<span class="sd">    operation: Callable</span>
+<span class="sd">        function to apply to the eigenvalues. Any unknown keyword args passed</span>
+<span class="sd">        to this function are passed to the operation function.</span>
+
+<span class="sd">    eig_function: str</span>
+<span class="sd">        Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">        Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+<span class="sd">        Default is &quot;eig&quot; for torch.eig.</span>
+
+<span class="sd">    mm_mode : str</span>
+<span class="sd">        Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">            &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">    **kwargs:</span>
+<span class="sd">        keyword arguments to pass to the operation function.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    eigvals : torch.Tensor</span>
+<span class="sd">        eigenvalues of shape (..., n_features)</span>
+<span class="sd">        of the SPD matrices in M.</span>
+
+<span class="sd">    eigvecs : torch.Tensor</span>
+<span class="sd">        eigenvectors of shape (..., n_features, n_features)</span>
+<span class="sd">        of the SPD matrices in M.</span>
+
+<span class="sd">    result : torch.Tensor</span>
+<span class="sd">        result of the operation on the eigenvalues of shape</span>
+<span class="sd">        (..., n_matrices, n_features) and reconstructed from the</span>
+<span class="sd">        eigenvectors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Parsing the eig_function argument</span>
+    <span class="k">assert</span> <span class="n">eig_function</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;eigh&quot;</span><span class="p">,</span> <span class="s2">&quot;eig&quot;</span><span class="p">],</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;eig_function must be in [&#39;eigh&#39;, &#39;eig&#39;], got </span><span class="si">{</span><span class="n">eig_function</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">eig_function</span> <span class="o">==</span> <span class="s2">&quot;eigh&quot;</span><span class="p">:</span>
+        <span class="n">_eig_function</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_eig_function</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eig</span>
+
+    <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">_eig_function</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+    <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">eigvals</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">eigvecs</span><span class="p">)</span>
+    <span class="n">_eigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">mm_mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+            <span class="s2">&quot;...cd,...de,...ef-&gt;...cf&quot;</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">_eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">eigvecs</span> <span class="o">@</span> <span class="n">_eigvals</span> <span class="o">@</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">symmetrize</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="eig_operation_gradient_eigs">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.eig_operation_gradient_eigs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">eig_operation_gradient_eigs</span><span class="p">(</span>
+    <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvecs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">grad_operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gradient of an operation on the eigenvalues of a SPD matrix towards the</span>
+<span class="sd">    eigenvalues and eigenvectors.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    grad_output : torch.Tensor</span>
+<span class="sd">        gradient of the loss function wrt the output of the operation.</span>
+<span class="sd">        of shape (..., n_features, n_features)</span>
+
+<span class="sd">    eigvals : torch.Tensor</span>
+<span class="sd">        eigenvalues of shape (..., n_features)</span>
+
+<span class="sd">    eigvecs : torch.Tensor</span>
+<span class="sd">        eigenvectors of shape (..., n_features, n_features)</span>
+
+<span class="sd">    operation: Callable</span>
+<span class="sd">        function to apply to the eigenvalues. Any unknown keyword args passed</span>
+<span class="sd">        to this function are passed to the operation function.</span>
+
+<span class="sd">    grad_operation: Callable</span>
+<span class="sd">        function to apply to the gradient of the operation. Any unknown</span>
+<span class="sd">        keyword args passed to this function are passed to the operation</span>
+<span class="sd">        function.</span>
+
+<span class="sd">    mm_mode : str</span>
+<span class="sd">        Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">            &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">    **kwargs:</span>
+<span class="sd">        keyword arguments to pass to the operation and gradient functions.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    grad_eigvals : torch.Tensor</span>
+<span class="sd">        gradient of the loss with respect to the eigenvalues of the layer.</span>
+
+<span class="sd">    grad_eigvecs : torch.Tensor</span>
+<span class="sd">        gradient of the loss with respect to the eigenvectors of the layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">grad_output_sym</span> <span class="o">=</span> <span class="n">symmetrize</span><span class="p">(</span><span class="n">grad_output</span><span class="p">)</span>
+    <span class="n">eigvals_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="n">deriveigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">grad_operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">mm_mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+        <span class="n">grad_eigvectors</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+            <span class="s2">&quot;...ab,...bc,...cd-&gt;...ad&quot;</span><span class="p">,</span> <span class="n">grad_output_sym</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">eigvals_</span>
+        <span class="p">)</span>
+        <span class="n">grad_eigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+            <span class="s2">&quot;...ab,...bc,...cd,...df-&gt;...af&quot;</span><span class="p">,</span>
+            <span class="n">deriveigvals</span><span class="p">,</span>
+            <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">grad_output_sym</span><span class="p">,</span>
+            <span class="n">eigvecs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># grad_eigvectors = 2*torch.bmm(</span>
+        <span class="c1">#         grad_output_sym, torch.bmm(eigvecs, eigvals_))</span>
+        <span class="c1"># grad_eigvals = torch.bmm(</span>
+        <span class="c1">#     torch.bmm(deriveigvals, eigvecs.transpose(-1, -2)),</span>
+        <span class="c1">#     torch.bmm(grad_output_sym, eigvecs))</span>
+        <span class="n">grad_eigvectors</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">grad_output_sym</span> <span class="o">@</span> <span class="n">eigvecs</span> <span class="o">@</span> <span class="n">eigvals_</span><span class="p">)</span>
+        <span class="n">grad_eigvals</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">deriveigvals</span> <span class="o">@</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">@</span> <span class="n">grad_output_sym</span> <span class="o">@</span> <span class="n">eigvecs</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">zero_offdiag</span><span class="p">(</span><span class="n">grad_eigvals</span><span class="p">),</span> <span class="n">grad_eigvectors</span></div>
+
+
+
+<div class="viewcode-block" id="construct_L_matrix">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.construct_L_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">construct_L_matrix</span><span class="p">(</span>
+    <span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eigvals_</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">deriveigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constructs the matrix L of brooks.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eigvals : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        eigenvalues of the SPD matrices</span>
+
+<span class="sd">    eigvals_ : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        f(eigenvalues) of the SPD matrices</span>
+
+<span class="sd">    deriveigvals : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">        f&#39;(eigenvalues) of the SPD matrices</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    L_matrix : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">        matrix L of brooks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">deriveigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">deriveigvals</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="n">eigvals</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">eigvals</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">numerator</span> <span class="o">=</span> <span class="n">eigvals_</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">eigvals_</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">null_denominator</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">denominator</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span>
+    <span class="p">)</span>  <span class="c1"># arbitrary value, probably to be changed to be proper</span>
+
+    <span class="n">numerator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">null_denominator</span><span class="p">,</span> <span class="n">deriveigvals</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">numerator</span><span class="p">)</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">null_denominator</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">numerator</span><span class="p">),</span> <span class="n">denominator</span><span class="p">)</span>
+
+    <span class="n">L_matrix</span> <span class="o">=</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span>
+    <span class="k">return</span> <span class="n">L_matrix</span></div>
+
+
+
+<div class="viewcode-block" id="eig_operation_gradient_inputandbias">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.eig_operation_gradient_inputandbias">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">eig_operation_gradient_inputandbias</span><span class="p">(</span>
+    <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvecs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">bias</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">grad_operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gradient of an operation on the eigenvalues of a SPD matrix towards the</span>
+<span class="sd">    input and the bias for ReEigBias module.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    grad_output : torch.Tensor</span>
+<span class="sd">        gradient of the loss function wrt the output of the operation.</span>
+<span class="sd">        of shape (..., n_features, n_features)</span>
+
+<span class="sd">    eigvals : torch.Tensor</span>
+<span class="sd">        eigenvalues of shape (..., n_features)</span>
+
+<span class="sd">    eigvecs : torch.Tensor</span>
+<span class="sd">        eigenvectors of shape (..., n_features, n_features)</span>
+
+<span class="sd">    bias : torch.Tensor</span>
+<span class="sd">        bias of shape (..., n_features)</span>
+
+<span class="sd">    operation: Callable</span>
+<span class="sd">        function to apply to the eigenvalues. Any unknown keyword args passed</span>
+<span class="sd">        to this function are passed to the operation function.</span>
+
+<span class="sd">    grad_operation: Callable</span>
+<span class="sd">        function to apply to the gradient of the operation.</span>
+<span class="sd">        Any unknown keyword args passed to this function are passed to the</span>
+<span class="sd">        operation function.</span>
+
+<span class="sd">    **kwargs:</span>
+<span class="sd">        keyword arguments to pass to the operation and gradient functions.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    grad_input : torch.Tensor</span>
+<span class="sd">        gradient of the loss with respect to the input of the layer.</span>
+
+<span class="sd">    grad_bias : torch.Tensor</span>
+<span class="sd">        gradient of the loss with respect to the bias of the layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">eigvals_nodiag_</span> <span class="o">=</span> <span class="n">operation</span><span class="p">(</span><span class="n">eigvals</span> <span class="o">+</span> <span class="n">bias</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">deriveigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">grad_operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="n">derivbias</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">grad_operation</span><span class="p">(</span><span class="n">bias</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="c1"># matrix L (13) brooks</span>
+    <span class="n">L_matrix</span> <span class="o">=</span> <span class="n">construct_L_matrix</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvals_nodiag_</span><span class="p">,</span> <span class="n">deriveigvals</span><span class="p">)</span>
+    <span class="n">eigvecs_transpose</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">middle_term</span> <span class="o">=</span> <span class="n">L_matrix</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">eigvecs_transpose</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvecs</span>
+    <span class="p">)</span>
+    <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">middle_term</span><span class="p">,</span> <span class="n">eigvecs_transpose</span>
+    <span class="p">)</span>
+    <span class="n">grad_bias</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;...ij,...jk,...kl,...lm-&gt;...im&quot;</span><span class="p">,</span>
+        <span class="n">derivbias</span><span class="p">,</span>
+        <span class="n">eigvecs_transpose</span><span class="p">,</span>
+        <span class="n">grad_output</span><span class="p">,</span>
+        <span class="n">eigvecs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Keep only the diagonal</span>
+    <span class="n">grad_bias</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">grad_bias</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">grad_input</span><span class="p">,</span> <span class="n">grad_bias</span></div>
+
+
+
+<div class="viewcode-block" id="eig_operation_gradient">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.eig_operation_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">eig_operation_gradient</span><span class="p">(</span>
+    <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">eigvecs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">grad_operation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span>
+    <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;brooks&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic function to compute the gradient of an operation on the</span>
+<span class="sd">    eigenvalues of a SPD matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    grad_output : torch.Tensor</span>
+<span class="sd">        gradient of the loss function wrt the output of the operation.</span>
+<span class="sd">        of shape (..., n_features, n_features)</span>
+
+<span class="sd">    eigvals : torch.Tensor</span>
+<span class="sd">        eigenvalues of shape (..., n_features)</span>
+
+<span class="sd">    eigvecs : torch.Tensor</span>
+<span class="sd">        eigenvectors of shape (..., n_features, n_features)</span>
+
+<span class="sd">    operation: Callable</span>
+<span class="sd">        function to apply to the eigenvalues. Any unknown keyword args passed</span>
+<span class="sd">        to this function are passed to the operation function.</span>
+
+<span class="sd">    grad_operation: Callable</span>
+<span class="sd">        function to apply to the gradient of the operation. Any unknown</span>
+<span class="sd">        keyword args passed to this function are passed to the operation</span>
+<span class="sd">        function.</span>
+
+<span class="sd">    mm_mode : str</span>
+<span class="sd">        Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">            &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">    formula : str</span>
+<span class="sd">        Formula to compute the gradient of the operation. Choices are:</span>
+<span class="sd">            &quot;brooks&quot; or &quot;ionescu&quot;. Default is &quot;brooks</span>
+
+<span class="sd">    **kwargs:</span>
+<span class="sd">        keyword arguments to pass to the operation and gradient functions.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ---------</span>
+<span class="sd">    grad_input : torch.Tensor</span>
+<span class="sd">        gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Parsing the formula argument</span>
+    <span class="k">assert</span> <span class="n">formula</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;brooks&quot;</span><span class="p">,</span> <span class="s2">&quot;ionescu&quot;</span><span class="p">],</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;formula must be in [&#39;brooks&#39;, &#39;ionescu&#39;], got </span><span class="si">{</span><span class="n">formula</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">formula</span> <span class="o">==</span> <span class="s2">&quot;brooks&quot;</span><span class="p">:</span>
+        <span class="n">eigvals_nodiag_</span> <span class="o">=</span> <span class="n">operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">deriveigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="n">grad_operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="c1"># matrix L (13) brooks</span>
+        <span class="n">L_matrix</span> <span class="o">=</span> <span class="n">construct_L_matrix</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvals_nodiag_</span><span class="p">,</span> <span class="n">deriveigvals</span><span class="p">)</span>
+        <span class="n">eigvecs_transpose</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mm_mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="n">middle_term</span> <span class="o">=</span> <span class="n">L_matrix</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">eigvecs_transpose</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvecs</span>
+            <span class="p">)</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">middle_term</span><span class="p">,</span> <span class="n">eigvecs_transpose</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">middle_term</span> <span class="o">=</span> <span class="n">L_matrix</span> <span class="o">*</span> <span class="p">(</span><span class="n">eigvecs_transpose</span> <span class="o">@</span> <span class="n">grad_output</span> <span class="o">@</span> <span class="n">eigvecs</span><span class="p">)</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">eigvecs</span> <span class="o">@</span> <span class="n">middle_term</span> <span class="o">@</span> <span class="n">eigvecs_transpose</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eigdiff_matrix</span> <span class="o">=</span> <span class="n">construct_eigdiff_matrix</span><span class="p">(</span><span class="n">eigvals</span><span class="p">)</span>
+        <span class="n">eigvecs_transpose</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">grad_eigvals</span><span class="p">,</span> <span class="n">grad_eigvectors</span> <span class="o">=</span> <span class="n">eig_operation_gradient_eigs</span><span class="p">(</span>
+            <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">grad_operation</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Computing final gradient towards X</span>
+        <span class="k">if</span> <span class="n">mm_mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="n">middle_term</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eigdiff_matrix</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...ij,...jk-&gt;...ik&quot;</span><span class="p">,</span> <span class="n">eigvecs_transpose</span><span class="p">,</span> <span class="n">grad_eigvectors</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="n">zero_offdiag</span><span class="p">(</span><span class="n">grad_eigvals</span><span class="p">)</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">middle_term</span><span class="p">,</span> <span class="n">eigvecs_transpose</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">middle_term</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">eigdiff_matrix</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="n">eigvecs_transpose</span> <span class="o">@</span> <span class="n">grad_eigvectors</span>
+            <span class="p">)</span> <span class="o">+</span> <span class="n">zero_offdiag</span><span class="p">(</span><span class="n">grad_eigvals</span><span class="p">)</span>
+            <span class="n">grad_input</span> <span class="o">=</span> <span class="n">eigvecs</span> <span class="o">@</span> <span class="n">middle_term</span> <span class="o">@</span> <span class="n">eigvecs_transpose</span>
+
+    <span class="k">return</span> <span class="n">grad_input</span></div>
+
+
+
+<span class="c1"># ReEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="re_operation">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.re_operation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">re_operation</span><span class="p">(</span><span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rectification of the eigenvalues of a SPD matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eigvals : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        eigenvalues of the SPD matrices</span>
+
+<span class="sd">    eps : float</span>
+<span class="sd">        Value for the rectification of the eigenvalues.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    eigvals_rect : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        eigenvalues of the SPD matrices with rectified eigenvalues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="re_operation_gradient">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.re_operation_gradient">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">re_operation_gradient</span><span class="p">(</span>
+    <span class="n">eigvals</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">float64</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gradient of the rectification of the eigenvalues of a SPD matrix.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eigvals : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        eigenvalues of the SPD matrices</span>
+
+<span class="sd">    eps : float</span>
+<span class="sd">        Value for the rectification of the eigenvalues.</span>
+
+<span class="sd">    dtype : Callable</span>
+<span class="sd">        Casting type of the gradient. Default is torch.float64.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    eigvals_rect : torch.Tensor of shape (..., n_features)</span>
+<span class="sd">        eigenvalues of the SPD matrices with rectified eigenvalues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">eigvals</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ReEigBiasFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigBiasFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReEigBiasFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ReEigBias function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ReEigBiasFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigBiasFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">bias</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_rect</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="s2">&quot;eigh&quot;</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="k">return</span> <span class="n">M_rect</span></div>
+
+
+<div class="viewcode-block" id="ReEigBiasFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigBiasFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">eps</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+
+        <span class="n">operation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">bias</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">grad_threshold</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">grad_min</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">eps</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Chain rule formula</span>
+        <span class="n">grad_operation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">grad_threshold</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad_min</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">grad_input</span><span class="p">,</span> <span class="n">grad_bias</span> <span class="o">=</span> <span class="n">eig_operation_gradient_inputandbias</span><span class="p">(</span>
+            <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">grad_operation</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">grad_input</span><span class="p">,</span> <span class="n">grad_bias</span><span class="p">,</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ReEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ReEig function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ReEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span>
+        <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span>
+        <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;brooks&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the ReEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+
+<span class="sd">        M : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices.</span>
+
+<span class="sd">        eps : float</span>
+<span class="sd">            Value for the rectification of the eigenvalues.</span>
+
+<span class="sd">        mm_mode : str</span>
+<span class="sd">            Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        eig_function: str</span>
+<span class="sd">            Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">            Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+
+<span class="sd">        formula : str</span>
+<span class="sd">            Formula to compute the gradient of the operation. Choices are:</span>
+<span class="sd">                &quot;brooks&quot; or &quot;ionescu&quot;. Default is &quot;brooks&quot;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        M_rect : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices with rectified eigenvalues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">re_operation</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_rect</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">eps</span> <span class="o">=</span> <span class="n">eps</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">formula</span> <span class="o">=</span> <span class="n">formula</span>
+        <span class="k">return</span> <span class="n">M_rect</span></div>
+
+
+<div class="viewcode-block" id="ReEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ReEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the ReEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">eps</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">formula</span>
+        <span class="n">operation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">re_operation</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">re_operation_gradient</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">grad_output</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">eig_operation_gradient</span><span class="p">(</span>
+                <span class="n">grad_output</span><span class="p">,</span>
+                <span class="n">eigvals</span><span class="p">,</span>
+                <span class="n">eigvecs</span><span class="p">,</span>
+                <span class="n">operation</span><span class="p">,</span>
+                <span class="n">operation_gradient</span><span class="p">,</span>
+                <span class="n">mm_mode</span><span class="p">,</span>
+                <span class="n">formula</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># LogEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="LogEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.LogEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;LogEig function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LogEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.LogEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span>
+        <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span>
+        <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span><span class="p">,</span>
+        <span class="n">formula</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;brooks&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the logEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+
+<span class="sd">        M : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices.</span>
+
+<span class="sd">        mm_mode : str</span>
+<span class="sd">            Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        eig_function: str</span>
+<span class="sd">            Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">            Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+
+<span class="sd">        formula : str</span>
+<span class="sd">            Formula to compute the gradient of the operation. Choices are:</span>
+<span class="sd">                &quot;brooks&quot; or &quot;ionescu&quot;. Default is &quot;brooks&quot;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        M_rect : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices with rectified eigenvalues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_rect</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">formula</span> <span class="o">=</span> <span class="n">formula</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M_rect</span></div>
+
+
+<div class="viewcode-block" id="LogEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.LogEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the logEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">formula</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">formula</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">x</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">eig_operation_gradient</span><span class="p">(</span>
+                <span class="n">grad_output</span><span class="p">,</span>
+                <span class="n">eigvals</span><span class="p">,</span>
+                <span class="n">eigvecs</span><span class="p">,</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">,</span>
+                <span class="n">operation_gradient</span><span class="p">,</span>
+                <span class="n">mm_mode</span><span class="p">,</span>
+                <span class="n">formula</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ExpEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="ExpEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ExpEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExpEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ExpEig function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ExpEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ExpEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the ExpEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+
+<span class="sd">        M : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices.</span>
+
+<span class="sd">        mm_mode : str</span>
+<span class="sd">            Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        eig_function: str</span>
+<span class="sd">            Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">            Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        M_exp : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices with exponentiated eigenvalues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_exp</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M_exp</span></div>
+
+
+<div class="viewcode-block" id="ExpEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.ExpEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the ExpEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">eig_operation_gradient</span><span class="p">(</span>
+                <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">,</span> <span class="n">operation_gradient</span><span class="p">,</span> <span class="n">mm_mode</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># SqrtmEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="SqrtmEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqrtmEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SqrtmEig function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SqrtmEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the SqrtmEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+
+<span class="sd">        M : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices.</span>
+
+<span class="sd">        mm_mode : str</span>
+<span class="sd">            Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        eig_function: str</span>
+<span class="sd">            Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">            Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        M_sqrtm : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices with square root of eigenvalues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_sqrtm</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M_sqrtm</span></div>
+
+
+<div class="viewcode-block" id="SqrtmEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the SqrtmEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">eig_operation_gradient</span><span class="p">(</span>
+                <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">,</span> <span class="n">operation_gradient</span><span class="p">,</span> <span class="n">mm_mode</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># InvSqrtmEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="InvSqrtmEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.InvSqrtmEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvSqrtmEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<div class="viewcode-block" id="InvSqrtmEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.InvSqrtmEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass of the InvSqrtmEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to save tensors for the backward pass.</span>
+
+<span class="sd">        M : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices.</span>
+
+<span class="sd">        mm_mode : str</span>
+<span class="sd">            Mode for the computation of the matrix multiplication. Choices are:</span>
+<span class="sd">                &quot;einsum&quot; or &quot;bmm&quot;. Default is &quot;einsum&quot;.</span>
+
+<span class="sd">        eig_function: str</span>
+<span class="sd">            Name of the function to compute the eigenvalues and eigenvectors.</span>
+<span class="sd">            Choices are: &quot;eigh&quot; or &quot;eig&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        M_inv_sqrtm : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Batch of SPD matrices with inverse square root of eigenvalues.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_inv_sqrtm</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span>
+            <span class="n">M</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span>
+        <span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M_inv_sqrtm</span></div>
+
+
+<div class="viewcode-block" id="InvSqrtmEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.InvSqrtmEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass of the InvSqrtmEig function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ctx : torch.autograd.function._ContextMethodMixin</span>
+<span class="sd">            Context object to retrieve tensors saved during the forward pass.</span>
+
+<span class="sd">        grad_output : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the output of the layer.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        grad_input : torch.Tensor of shape (..., n_features, n_features)</span>
+<span class="sd">            Gradient of the loss with respect to the input of the layer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.5</span><span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">eig_operation_gradient</span><span class="p">(</span>
+                <span class="n">grad_output</span><span class="p">,</span>
+                <span class="n">eigvals</span><span class="p">,</span>
+                <span class="n">eigvecs</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                <span class="n">operation_gradient</span><span class="p">,</span>
+                <span class="n">mm_mode</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SqrtmAndInvSqrtmEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SqrtmAndInvSqrtmEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Function that computes the square root and inverse square root of the</span>
+<span class="sd">    eigenvalues of a SPD matrix.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SqrtmAndInvSqrtmEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;einsum&quot;</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;eigh&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_sqrtm</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">,</span> <span class="n">eig_function</span><span class="p">,</span> <span class="n">mm_mode</span><span class="p">)</span>
+        <span class="n">_eigvals</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eigvals</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">mm_mode</span> <span class="o">==</span> <span class="s2">&quot;einsum&quot;</span><span class="p">:</span>
+            <span class="n">M_inv_sqrtm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+                <span class="s2">&quot;...cd,...de,...ef-&gt;...cf&quot;</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">_eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">M_inv_sqrtm</span> <span class="o">=</span> <span class="n">eigvecs</span> <span class="o">@</span> <span class="n">_eigvals</span> <span class="o">@</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span> <span class="o">=</span> <span class="n">mm_mode</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M_sqrtm</span><span class="p">,</span> <span class="n">M_inv_sqrtm</span></div>
+
+
+<div class="viewcode-block" id="SqrtmAndInvSqrtmEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.SqrtmAndInvSqrtmEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output_sqrtm</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">grad_output_inv_sqrtm</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">mm_mode</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mm_mode</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+
+        <span class="n">operation_gradient_sqrtm</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">operation_gradient_inv_sqrtm</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.5</span><span class="p">)</span>
+
+        <span class="n">grad_input_sqrtm</span> <span class="o">=</span> <span class="n">eig_operation_gradient</span><span class="p">(</span>
+            <span class="n">grad_output_sqrtm</span><span class="p">,</span>
+            <span class="n">eigvals</span><span class="p">,</span>
+            <span class="n">eigvecs</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">,</span>
+            <span class="n">operation_gradient_sqrtm</span><span class="p">,</span>
+            <span class="n">mm_mode</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">grad_input_inv_sqrtm</span> <span class="o">=</span> <span class="n">eig_operation_gradient</span><span class="p">(</span>
+            <span class="n">grad_output_inv_sqrtm</span><span class="p">,</span>
+            <span class="n">eigvals</span><span class="p">,</span>
+            <span class="n">eigvecs</span><span class="p">,</span>
+            <span class="n">operation_gradient_inv_sqrtm</span><span class="p">,</span>
+            <span class="n">mm_mode</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># TODO: NOT SURE ABOUT THIS</span>
+        <span class="k">return</span> <span class="n">grad_input_sqrtm</span> <span class="o">+</span> <span class="n">grad_input_inv_sqrtm</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<span class="c1"># PowerEig</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="PowerEigFunction">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.PowerEigFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PowerEigFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;PowerEig function.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PowerEigFunction.forward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.PowerEigFunction.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">power</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="n">p</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">M_power</span> <span class="o">=</span> <span class="n">eig_operation</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">power</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+
+        <span class="k">return</span> <span class="n">M_power</span></div>
+
+
+<div class="viewcode-block" id="PowerEigFunction.backward">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.PowerEigFunction.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">p</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span>
+        <span class="n">operation_gradient</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">p</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eig_operation_gradient</span><span class="p">(</span>
+            <span class="n">grad_output</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="n">p</span><span class="p">,</span> <span class="n">operation_gradient</span>
+        <span class="p">),</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Vectorisation stuff</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="vec_batch">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.vec_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vec_batch</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectorize a batch of tensors along last two dimensions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, k)</span>
+<span class="sd">        Batch of matrices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    X_vec : torch.Tensor of shape (..., n*k)</span>
+<span class="sd">        Batch of vectorized matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unvec_batch">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.unvec_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unvec_batch</span><span class="p">(</span><span class="n">X_vec</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unvectorize a batch of tensors along last dimension.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X_vec : torch.Tensor of shape (..., n*k)</span>
+<span class="sd">        Batch of vectorized matrices.</span>
+
+<span class="sd">    n : int</span>
+<span class="sd">        Number of rows of the matrices.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, k)</span>
+<span class="sd">        Batch of matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">X_vec</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">*</span><span class="n">X_vec</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="vech_batch">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.vech_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vech_batch</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vectorize the lower triangular part of a batch of square matrices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of matrices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    X_vech : torch.Tensor of shape (..., n*(n+1)//2)</span>
+<span class="sd">        Batch of vectorized matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="unvech_batch">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.unvech_batch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unvech_batch</span><span class="p">(</span><span class="n">X_vech</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unvectorize a batch of tensors along last dimension.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X_vech : torch.Tensor of shape (..., n*(n+1)//2)</span>
+<span class="sd">        Batch of vectorized matrices.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">X_vech</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">X_vech</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">X_vech</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">X_vech</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">X_vech</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">symmetrize</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span></div>
+
+
+
+<span class="c1"># Riemannian operations</span>
+<span class="c1"># -----------------------------</span>
+<div class="viewcode-block" id="spd_affine_invariant_geodesic">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.spd_affine_invariant_geodesic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">spd_affine_invariant_geodesic</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Affine invariant geodesic between two SPD matrices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of SPD matrices.</span>
+
+<span class="sd">    Y : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of SPD matrices.</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        Parameter of the geodesic. between 0 and 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Z : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of SPD matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO: Make that we compute the less time possible eig decomposition</span>
+    <span class="k">assert</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;t must be between 0 and 1&quot;</span>
+
+    <span class="n">sqrtm_X</span> <span class="o">=</span> <span class="n">SqrtmEigFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">sqrtm_X_inv</span> <span class="o">=</span> <span class="n">InvSqrtmEigFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+        <span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span>
+        <span class="n">sqrtm_X</span><span class="p">,</span>
+        <span class="n">PowerEigFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">sqrtm_X_inv</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">sqrtm_X_inv</span><span class="p">),</span> <span class="n">t</span>
+        <span class="p">),</span>
+        <span class="n">sqrtm_X</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="spd_affine_invariant_distance">
+<a class="viewcode-back" href="../../reference/functions.html#anotherspdnet.functions.spd_affine_invariant_distance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">spd_affine_invariant_distance</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Affine invariant distance between two SPD matrices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of SPD matrices.</span>
+
+<span class="sd">    Y : torch.Tensor of shape (..., n, n)</span>
+<span class="sd">        Batch of SPD matrices.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    d : torch.Tensor of shape (...,)</span>
+<span class="sd">        Batch of distances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sqrtm_X_inv</span> <span class="o">=</span> <span class="n">InvSqrtmEigFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span>
+        <span class="n">LogEigFunction</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;...ij,...jk,...kl-&gt;...il&quot;</span><span class="p">,</span> <span class="n">sqrtm_X_inv</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">sqrtm_X_inv</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">dim</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">p</span><span class="o">=</span><span class="s2">&quot;fro&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Ammar Mian, Florent Bouchard, Guillaume Ginolhac, Paul Chauchat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

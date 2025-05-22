@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Utils &mdash; AnotherSPDNet  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Analysis" href="analysis.html" />
+    <link rel="prev" title="Functions" href="functions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            AnotherSPDNet
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Package reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nn.html">NN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html">Functions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.initialize_weights_stiefel"><code class="docutils literal notranslate"><span class="pre">initialize_weights_stiefel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.initialize_weights_sphere"><code class="docutils literal notranslate"><span class="pre">initialize_weights_sphere()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.symmetrize"><code class="docutils literal notranslate"><span class="pre">symmetrize()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.construct_eigdiff_matrix"><code class="docutils literal notranslate"><span class="pre">construct_eigdiff_matrix()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.zero_offdiag"><code class="docutils literal notranslate"><span class="pre">zero_offdiag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.nd_tensor_to_3d"><code class="docutils literal notranslate"><span class="pre">nd_tensor_to_3d()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anotherspdnet.utils.threed_tensor_to_nd"><code class="docutils literal notranslate"><span class="pre">threed_tensor_to_nd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="batchnorm.html">Batchnorm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="estimation.html">Estimation</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AnotherSPDNet</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Package reference</a></li>
+      <li class="breadcrumb-item active">Utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="utils">
+<h1>Utils<a class="headerlink" href="#utils" title="Link to this heading"></a></h1>
+<p>This module contains a set of utility functions used by the other modules.</p>
+<dl class="py function" id="module-anotherspdnet.utils">
+<dt class="sig sig-object py" id="anotherspdnet.utils.initialize_weights_stiefel">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">initialize_weights_stiefel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">geoopt.tensor.ManifoldParameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">geoopt.tensor.ManifoldParameter</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#initialize_weights_stiefel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.initialize_weights_stiefel" title="Link to this definition"></a></dt>
+<dd><p>Initialize the weights as being on the Stiefel manifold.</p>
+<p>Theorem 2.2.1 in Chikuse (2003): statistics on special manifolds.
+TODO: Verify that this is correct.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>W</strong> (<em>geoopt.tensor.ManifoldParameter</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>k</em><em>)</em>) – weights to be initialized. n should be greater than k.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – random seed for reproducibility. If None, no seed is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>W</strong> – initialized weights (same object as input with data changed)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>geoopt.tensor.ManifoldParameter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.initialize_weights_sphere">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">initialize_weights_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">geoopt.tensor.ManifoldParameter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">geoopt.tensor.ManifoldParameter</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#initialize_weights_sphere"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.initialize_weights_sphere" title="Link to this definition"></a></dt>
+<dd><p>Initialize the weights as being on the sphere manifold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>W</strong> (<em>geoopt.tensor.ManifoldParameter</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n</em><em>, </em><em>k</em><em>)</em>) – weights to be initialized</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – random seed for reproducibility. If None, no seed is used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>W</strong> – initialized weights (same object as input with data changed)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>geoopt.tensor.ManifoldParameter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.symmetrize">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">symmetrize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#symmetrize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.symmetrize" title="Link to this definition"></a></dt>
+<dd><p>Symmetrize a tensor along the last two dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – tensor of shape (…, n_features, n_features)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sym_X</strong> – symmetrized tensor of shape (…, n_features, n_features)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.construct_eigdiff_matrix">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">construct_eigdiff_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#construct_eigdiff_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.construct_eigdiff_matrix" title="Link to this definition"></a></dt>
+<dd><p>Constructs the matrix of the inverse pairwise differences between
+eigenvalues on the off-diagonal and 0 on the diagonal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eigvals</strong> (<em>torch.Tensor</em><em> of </em><em>shape</em><em> (</em><em>...</em><em>, </em><em>n_features</em><em>)</em>) – eigenvalues of the SPD matrices</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>eigdiff_matrix</strong> – matrix of the inverse pairwise differences between eigenvalues</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor of shape (…, n_features, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.zero_offdiag">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">zero_offdiag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#zero_offdiag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.zero_offdiag" title="Link to this definition"></a></dt>
+<dd><p>Sets the off-diagonal elements of a tensor to 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>torch.Tensor</em>) – tensor of shape (…, n_features, n_features)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>X_zero</strong> – tensor of shape (…, n_features, n_features) with 0 on the
+off-diagonal</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.nd_tensor_to_3d">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">nd_tensor_to_3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#nd_tensor_to_3d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.nd_tensor_to_3d" title="Link to this definition"></a></dt>
+<dd><p>Converts an n-dimensional tensor to a 3D tensor by fusing the first
+dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – tensor of shape (…, n, m)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>output</strong> – tensor of shape (d, n, m), where d is the product of the first
+dimensions of input</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="anotherspdnet.utils.threed_tensor_to_nd">
+<span class="sig-prename descclassname"><span class="pre">anotherspdnet.utils.</span></span><span class="sig-name descname"><span class="pre">threed_tensor_to_nd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/anotherspdnet/utils.html#threed_tensor_to_nd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#anotherspdnet.utils.threed_tensor_to_nd" title="Link to this definition"></a></dt>
+<dd><p>Converts a 3D tensor to an n-dimensional tensor by splitting the first
+dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>torch.Tensor</em>) – tensor of shape (d, n, m)</p></li>
+<li><p><strong>shape</strong> (<em>torch.Size</em>) – shape of the output tensor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>output</strong> – tensor of shape (…, n, m)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="functions.html" class="btn btn-neutral float-left" title="Functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="analysis.html" class="btn btn-neutral float-right" title="Analysis" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Ammar Mian, Florent Bouchard, Guillaume Ginolhac, Paul Chauchat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
