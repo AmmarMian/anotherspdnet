@@ -282,6 +282,7 @@ def eig_operation(
         _eig_function = torch.linalg.eig
 
     eigvals, eigvecs = _eig_function(M)
+    eigvals, eigvecs = torch.real(eigvals), torch.real(eigvecs)
     _eigvals = torch.diag_embed(operation(eigvals, **kwargs))
     if mm_mode == "einsum":
         result = torch.einsum(
