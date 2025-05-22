@@ -282,7 +282,6 @@ def eig_operation(
         _eig_function = torch.linalg.eig
 
     eigvals, eigvecs = _eig_function(M)
-    eigvals, eigvecs = torch.abs(eigvals), torch.real(eigvecs)
     _eigvals = torch.diag_embed(operation(eigvals, **kwargs))
     if mm_mode == "einsum":
         result = torch.einsum(
@@ -386,7 +385,7 @@ def construct_L_matrix(
     eigvals_ : torch.Tensor of shape (..., n_features)
         f(eigenvalues) of the SPD matrices
 
-    deriveigvals : torch.Tensor of shape (..., n_features)
+    deriveigvals : torch.Tensor of shape (..., n_features, n_features)
         f'(eigenvalues) of the SPD matrices
 
     Returns
@@ -394,12 +393,18 @@ def construct_L_matrix(
     L_matrix : torch.Tensor of shape (..., n_features, n_features)
         matrix L of brooks
     """
-    L_matrix = (eigvals_.unsqueeze(-1) - eigvals_.unsqueeze(-2)) / (
-        eigvals.unsqueeze(-1) - eigvals.unsqueeze(-2)
-    )
-    L_matrix[torch.isinf(L_matrix)] = 0.0
-    L_matrix[torch.isnan(L_matrix)] = 0.0
-    L_matrix = L_matrix + zero_offdiag(deriveigvals)
+    deriveigvals = torch.diagonal(deriveigvals, -1, -2)
+    denominator = eigvals.unsqueeze(-1) - eigvals.unsqueeze(-2)
+    numerator = eigvals_.unsqueeze(-1) - eigvals_.unsqueeze(-2)
+
+    null_denominator = (
+        torch.abs(denominator) < 1e-6
+    )  # arbitrary value, probably to be changed to be proper
+
+    numerator = torch.where(null_denominator, deriveigvals.unsqueeze(-1), numerator)
+    denominator = torch.where(null_denominator, torch.ones_like(numerator), denominator)
+
+    L_matrix = numerator / denominator
     return L_matrix
 
 
